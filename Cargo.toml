@@ -8,5 +8,4 @@ anyhow = { version = "1.0.89", features = ["backtrace"] }
 glob = "0.3.1"
 midi-control = "0.2.2"
 rodio = "0.19.0"
-serialport = "4.5.1"
-tokio = { version = "1.40.0", features = ["full"] }
+serialport = { version = "4.5.1", default-features = false }
