@@ -41,7 +41,7 @@ impl Synth {
         ];
         let wave_table = Self::build_wave_table(overtones);
         let mut lfo = LFO::new();
-        lfo.set_frequency(400.0 / 60.0);
+        lfo.set_frequency(340.0 / 60.0);
 
         Self {
             osc_s: [Oscillator::new(); VOICES],

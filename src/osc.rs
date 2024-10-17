@@ -101,7 +101,7 @@ impl Oscillator {
     }
 
     pub fn vibrato(&mut self, amt: f32) {
-        let amt = amt * 0.125;
+        let amt = amt * 0.25;
 
         let next_note = if amt > 0.0 {
             self.frequency * self.note_space
