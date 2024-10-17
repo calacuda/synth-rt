@@ -85,18 +85,28 @@ impl Synth {
         let mut sample = 0.0;
         let lfo_sample = self.lfo.get_sample();
 
-        for ref mut osc in self.osc_s {
-            if osc.is_pressed() {
+        for osc in self.osc_s.iter_mut() {
+            // println!("{osc:?}");
+            if osc.playing.is_some() {
                 osc.vibrato(lfo_sample);
+                // println!("playing");
                 sample += osc.get_sample(&self.wave_table)
             }
         }
 
-        sample * (self.volume + lfo_sample * 0.125)
+        sample * (self.volume + lfo_sample * 0.25)
+        // println!("synth sample => {sample}");
+        // sample * self.volume
     }
 
     pub fn play(&mut self, midi_note: MidiNote, velocity: u8) {
-        for (i, mut osc) in self.osc_s.iter_mut().enumerate() {
+        for osc in self.osc_s.iter_mut() {
+            if osc.playing == Some(midi_note) {
+                return;
+            }
+        }
+
+        for (i, osc) in self.osc_s.iter_mut().enumerate() {
             if osc.playing.is_none() {
                 osc.press(midi_note);
                 println!("playing note on osc {i}");
@@ -107,8 +117,9 @@ impl Synth {
     }
 
     pub fn stop(&mut self, midi_note: MidiNote) {
-        for mut osc in self.osc_s {
+        for osc in self.osc_s.iter_mut() {
             if osc.playing == Some(midi_note) {
+                println!("release");
                 osc.release();
                 break;
             }

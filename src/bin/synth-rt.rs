@@ -3,7 +3,6 @@ use midi_control::{KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
 use std::{
-    io::{stdin, stdout, Write},
     process::exit,
     sync::{Arc, Mutex},
     thread::spawn,
@@ -18,13 +17,12 @@ fn main() -> Result<()> {
     let output = Player {
         synth: synth.clone(),
     };
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
 
     // start output
     spawn(move || {
-        let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-
         if let Err(e) = stream_handle.play_raw(output) {
-            println!("{e}");
+            println!("[ERROR] => {e}");
             exit(1);
         }
     });
@@ -65,6 +63,8 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
                 println!("{e}");
                 break;
             };
+
+            println!("{midi_cmd:?}");
 
             // parse into midi command
 

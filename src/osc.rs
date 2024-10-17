@@ -93,7 +93,11 @@ impl Oscillator {
     }
 
     pub fn get_sample(&mut self, wave_table: &[f32]) -> f32 {
-        self.wt_osc.get_sample(wave_table) * self.env_filter.get_samnple()
+        let sample = self.wt_osc.get_sample(wave_table) * self.env_filter.get_samnple();
+
+        // println!("osc sample => {sample}");
+
+        sample
     }
 
     pub fn vibrato(&mut self, amt: f32) {
