@@ -96,9 +96,11 @@ impl Synth {
     }
 
     pub fn play(&mut self, midi_note: MidiNote, velocity: u8) {
-        for mut osc in self.osc_s {
+        for (i, mut osc) in self.osc_s.iter_mut().enumerate() {
             if osc.playing.is_none() {
                 osc.press(midi_note);
+                println!("playing note on osc {i}");
+
                 break;
             }
         }
