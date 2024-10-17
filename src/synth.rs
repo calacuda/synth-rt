@@ -19,11 +19,12 @@ impl Synth {
     pub fn new() -> Self {
         let overtones = [
             Some(Overtone {
-                overtone: 0.25,
+                overtone: 0.5_f64.powf(1.0 / 12.0),
                 volume: 1.0,
             }),
             Some(Overtone {
-                overtone: 0.5,
+                // overtone: 2.0_f64.powf(1.0 / 12.0),
+                overtone: 1.5_f64.powf(1.0 / 12.0),
                 volume: 1.0,
             }),
             Some(Overtone {
@@ -39,11 +40,13 @@ impl Synth {
             None,
         ];
         let wave_table = Self::build_wave_table(overtones);
+        let mut lfo = LFO::new();
+        lfo.set_frequency(400.0 / 60.0);
 
         Self {
             osc_s: [Oscillator::new(); VOICES],
             wave_table,
-            lfo: LFO::new(),
+            lfo,
             volume: 0.75,
         }
     }
@@ -84,6 +87,7 @@ impl Synth {
     pub fn get_sample(&mut self) -> f32 {
         let mut sample = 0.0;
         let lfo_sample = self.lfo.get_sample();
+        // println!("lfo sample {lfo_sample}");
 
         for osc in self.osc_s.iter_mut() {
             // println!("{osc:?}");
@@ -94,7 +98,7 @@ impl Synth {
             }
         }
 
-        sample * (self.volume + lfo_sample * 0.25)
+        sample * (self.volume + lfo_sample * 0.0125)
         // println!("synth sample => {sample}");
         // sample * self.volume
     }

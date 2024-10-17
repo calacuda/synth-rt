@@ -27,16 +27,6 @@ fn main() -> Result<()> {
         }
     });
 
-    // start midi listener
-    // spawn(move || {
-    //     if let Err(e) = run_midi(synth) {
-    //         println!("{e}");
-    //         exit(1);
-    //     }
-    // });
-    //
-    // Ok(())
-
     run_midi(synth)
 }
 
@@ -51,11 +41,14 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
 
         println!("port => {}", port.as_os_str().to_string_lossy());
 
-        let mut serial_port =
-            serialport::new(format!("{}", port.as_os_str().to_string_lossy()), 31_250)
-                .timeout(Duration::from_millis(1000))
+        let Ok(mut serial_port) =
+            serialport::new(format!("{}", port.as_os_str().to_string_lossy()), 115200)
+                .timeout(Duration::from_millis(u64::MAX))
                 .open()
-                .expect("Failed to open serial port");
+        else {
+            continue;
+        };
+        // .expect("Failed to open serial port");
 
         while i < 5 {
             // read serial
@@ -85,6 +78,4 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
             }
         }
     }
-
-    Ok(())
 }

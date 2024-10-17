@@ -101,6 +101,8 @@ impl Oscillator {
     }
 
     pub fn vibrato(&mut self, amt: f32) {
+        let amt = amt * 0.125;
+
         let next_note = if amt > 0.0 {
             self.frequency * self.note_space
         } else if amt == 0.0 {
@@ -112,6 +114,10 @@ impl Oscillator {
 
         let freq_delta = (self.frequency - next_note).abs();
         let adjust_amt = freq_delta * amt * 0.5;
-        self.wt_osc.set_frequency(self.frequency + adjust_amt)
+        self.wt_osc.set_frequency(
+            // self.frequency
+            //     + (self.frequency - self.frequency * (2.0_f32.powf(1.0 / 12.0) * adjust_amt)),
+            self.frequency + adjust_amt,
+        )
     }
 }
