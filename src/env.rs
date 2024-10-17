@@ -17,7 +17,7 @@ pub struct ADSR {
 
 impl ADSR {
     pub fn new() -> Self {
-        let base_params = [0.0, 0.001, -0.001, 0.5, 0.01];
+        let base_params = [0.0, 0.001, -0.001, 0.5, 0.5];
 
         Self {
             sample_rate: SAMPLE_RATE,
