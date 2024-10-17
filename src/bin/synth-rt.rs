@@ -30,14 +30,16 @@ fn main() -> Result<()> {
     });
 
     // start midi listener
-    spawn(move || {
-        if let Err(e) = run_midi(synth) {
-            println!("{e}");
-            exit(1);
-        }
-    });
+    // spawn(move || {
+    //     if let Err(e) = run_midi(synth) {
+    //         println!("{e}");
+    //         exit(1);
+    //     }
+    // });
+    //
+    // Ok(())
 
-    Ok(())
+    run_midi(synth)
 }
 
 fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
@@ -72,7 +74,7 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
                     synth.lock().unwrap().play(key, value);
                     break;
                 }
-                MidiMessage::NoteOff(_, KeyEvent { key, value }) => {
+                MidiMessage::NoteOff(_, KeyEvent { key, value: _ }) => {
                     synth.lock().unwrap().stop(key);
                     break;
                 }
