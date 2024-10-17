@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.89", features = ["backtrace"] }
 glob = "0.3.1"
-midi-control = "0.2.2"
+midi-control = { version = "0.2.2", default-features = false }
 rodio = "0.19.0"
 serialport = { version = "4.5.1", default-features = false }
