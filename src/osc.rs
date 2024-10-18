@@ -114,10 +114,6 @@ impl Oscillator {
 
         let freq_delta = (self.frequency - next_note).abs();
         let adjust_amt = freq_delta * amt * 0.5;
-        self.wt_osc.set_frequency(
-            // self.frequency
-            //     + (self.frequency - self.frequency * (2.0_f32.powf(1.0 / 12.0) * adjust_amt)),
-            self.frequency + adjust_amt,
-        )
+        self.wt_osc.set_frequency(self.frequency + adjust_amt)
     }
 }

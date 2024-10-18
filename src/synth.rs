@@ -41,7 +41,7 @@ impl Synth {
         ];
         let wave_table = Self::build_wave_table(overtones);
         let mut lfo = LFO::new();
-        lfo.set_frequency(340.0 / 60.0);
+        lfo.set_frequency(100.0 / 60.0);
 
         Self {
             osc_s: [Oscillator::new(); VOICES],
@@ -98,7 +98,7 @@ impl Synth {
             }
         }
 
-        sample * (self.volume + lfo_sample * 0.0125)
+        sample * (self.volume + lfo_sample * 0.125)
         // println!("synth sample => {sample}");
         // sample * self.volume
     }
