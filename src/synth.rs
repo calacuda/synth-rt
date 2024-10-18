@@ -31,10 +31,22 @@ impl Synth {
                 overtone: 1.0,
                 volume: 1.0,
             }),
-            None,
-            None,
-            None,
-            None,
+            Some(Overtone {
+                overtone: 2.0,
+                volume: 1.0 / 8.0,
+            }),
+            Some(Overtone {
+                overtone: 3.0,
+                volume: 3.0 / 8.0,
+            }),
+            Some(Overtone {
+                overtone: 4.0,
+                volume: 5.0 / 8.0,
+            }),
+            Some(Overtone {
+                overtone: 5.0,
+                volume: 8.0 / 8.0,
+            }),
             None,
             None,
             None,
