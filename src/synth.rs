@@ -94,7 +94,12 @@ impl Synth {
             if osc.playing.is_some() {
                 osc.vibrato(lfo_sample);
                 // println!("playing");
-                sample += osc.get_sample(&self.wave_table)
+                sample += osc.get_sample(&self.wave_table);
+                // println!(
+                //     "env => {}, {}",
+                //     osc.env_filter.get_samnple(),
+                //     osc.env_filter.phase
+                // );
             }
         }
 

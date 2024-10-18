@@ -50,7 +50,7 @@ impl WavetableOscillator {
 #[derive(Clone, Copy, Debug)]
 pub struct Oscillator {
     wt_osc: WavetableOscillator,
-    env_filter: ADSR,
+    pub env_filter: ADSR,
     /// what midi note is being played by this osc
     pub playing: Option<u8>,
     frequency: f32,
@@ -89,12 +89,16 @@ impl Oscillator {
 
     pub fn release(&mut self) {
         self.env_filter.release();
-        self.playing = None;
+        // self.playing = None;
     }
 
     pub fn get_sample(&mut self, wave_table: &[f32]) -> f32 {
-        let sample = self.wt_osc.get_sample(wave_table) * self.env_filter.get_samnple();
+        let env = self.env_filter.get_samnple();
+        let sample = self.wt_osc.get_sample(wave_table) * env;
 
+        if env <= 0.0 {
+            self.playing = None;
+        }
         // println!("osc sample => {sample}");
 
         sample
