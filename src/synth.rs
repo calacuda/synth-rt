@@ -136,10 +136,10 @@ impl Synth {
             }
         }
 
-        for (i, osc) in self.osc_s.iter_mut().enumerate() {
+        for osc in self.osc_s.iter_mut() {
             if osc.playing.is_none() {
                 osc.press(midi_note);
-                println!("playing note on osc {i}");
+                // println!("playing note on osc {i}");
 
                 break;
             }
