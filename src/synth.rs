@@ -5,7 +5,7 @@ use crate::{
     osc::{Oscillator, Overtone},
 };
 
-pub const WAVE_TABLE_SIZE: usize = 128;
+pub const WAVE_TABLE_SIZE: usize = 256;
 pub const VOICES: usize = 10;
 
 pub struct Synth {
@@ -19,35 +19,38 @@ impl Synth {
     pub fn new() -> Self {
         let overtones = [
             Some(Overtone {
-                overtone: 0.5_f64.powf(1.0 / 12.0),
+                overtone: 1.0_f64.powf(1.0 / 12.0),
                 volume: 1.0,
             }),
             Some(Overtone {
                 // overtone: 2.0_f64.powf(1.0 / 12.0),
-                overtone: 1.5_f64.powf(1.0 / 12.0),
-                volume: 1.0,
-            }),
-            Some(Overtone {
-                overtone: 1.0,
+                overtone: 2.5_f64.powf(1.0 / 12.0),
                 volume: 1.0,
             }),
             Some(Overtone {
                 overtone: 2.0,
-                volume: 1.0 / 8.0,
+                volume: 1.0,
             }),
             Some(Overtone {
                 overtone: 3.0,
-                volume: 3.0 / 8.0,
+                volume: 0.0 / 8.0,
             }),
             Some(Overtone {
                 overtone: 4.0,
-                volume: 5.0 / 8.0,
+                volume: 0.0 / 8.0,
             }),
             Some(Overtone {
                 overtone: 5.0,
-                volume: 8.0 / 8.0,
+                volume: 0.0 / 8.0,
             }),
-            None,
+            Some(Overtone {
+                overtone: 7.0,
+                volume: 0.0 / 8.0,
+            }),
+            Some(Overtone {
+                overtone: 8.0,
+                volume: 0.0 / 8.0,
+            }),
             None,
             None,
         ];
@@ -121,6 +124,12 @@ impl Synth {
     }
 
     pub fn play(&mut self, midi_note: MidiNote, velocity: u8) {
+        let midi_note = if midi_note >= 12 {
+            midi_note - 12
+        } else {
+            return;
+        };
+
         for osc in self.osc_s.iter_mut() {
             if osc.playing == Some(midi_note) {
                 return;
@@ -138,11 +147,33 @@ impl Synth {
     }
 
     pub fn stop(&mut self, midi_note: MidiNote) {
+        let midi_note = if midi_note >= 12 {
+            midi_note - 12
+        } else {
+            return;
+        };
+
         for osc in self.osc_s.iter_mut() {
             if osc.playing == Some(midi_note) {
-                println!("release");
+                // println!("release");
                 osc.release();
                 break;
+            }
+        }
+    }
+
+    pub fn bend_all(&mut self, bend: f32) {
+        for osc in self.osc_s.iter_mut() {
+            if osc.playing.is_some() {
+                osc.bend(bend);
+            }
+        }
+    }
+
+    pub fn unbend(&mut self) {
+        for osc in self.osc_s.iter_mut() {
+            if osc.playing.is_some() {
+                osc.unbend();
             }
         }
     }

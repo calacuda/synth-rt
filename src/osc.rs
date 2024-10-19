@@ -54,6 +54,7 @@ pub struct Oscillator {
     /// what midi note is being played by this osc
     pub playing: Option<u8>,
     frequency: f32,
+    base_frequency: f32,
     note_space: f32,
 }
 
@@ -64,6 +65,7 @@ impl Oscillator {
             env_filter: ADSR::new(),
             playing: None,
             frequency: 0.0,
+            base_frequency: 0.0,
             note_space: 2.0_f32.powf(1.0 / 12.0),
         }
     }
@@ -75,6 +77,7 @@ impl Oscillator {
     pub fn press(&mut self, midi_note: u8) {
         self.env_filter.press();
         self.frequency = Self::get_freq(midi_note);
+        self.base_frequency = self.frequency;
 
         self.wt_osc.set_frequency(self.frequency);
         self.playing = Some(midi_note);
@@ -119,5 +122,21 @@ impl Oscillator {
         let freq_delta = (self.frequency - next_note).abs();
         let adjust_amt = freq_delta * amt * 0.5;
         self.wt_osc.set_frequency(self.frequency + adjust_amt)
+    }
+
+    pub fn bend(&mut self, bend: f32) {
+        // println!("bending");
+        let new_freq = self.base_frequency * 2.0_f32.powf((bend * 4.0) / 12.0);
+        // + self.frequency;
+        self.wt_osc.set_frequency(new_freq);
+        // println!("frequency => {}", self.frequency);
+        // println!("new_freq => {}", new_freq);
+        self.frequency = new_freq;
+    }
+
+    pub fn unbend(&mut self) {
+        // println!("unbend => {}", self.base_frequency);
+        self.wt_osc.set_frequency(self.base_frequency);
+        self.frequency = self.base_frequency;
     }
 }
