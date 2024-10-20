@@ -5,6 +5,7 @@ use std::{
 };
 use synth::Synth;
 
+pub mod chorus;
 pub mod env;
 pub mod lfo;
 pub mod moog_filter;

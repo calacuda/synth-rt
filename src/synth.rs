@@ -1,4 +1,5 @@
 use crate::{
+    chorus::Chorus,
     lfo::LFO,
     osc::{Oscillator, Overtone},
 };
@@ -12,6 +13,7 @@ pub struct Synth {
     wave_table: [f32; WAVE_TABLE_SIZE],
     lfo: LFO,
     volume: f32,
+    chorus: Chorus,
 }
 
 impl Synth {
@@ -62,6 +64,7 @@ impl Synth {
             wave_table,
             lfo,
             volume: 0.75,
+            chorus: Chorus::new(),
         }
     }
 
@@ -117,7 +120,8 @@ impl Synth {
             }
         }
 
-        sample * (self.volume + lfo_sample * 0.0125)
+        let sample = sample * (self.volume + lfo_sample * 0.0125);
+        sample + self.chorus.get_sample(sample)
         // println!("synth sample => {sample}");
         // sample * self.volume
     }
@@ -219,9 +223,13 @@ impl Synth {
         }
     }
 
-    // pub fn set_atk(&mut self, atk: f32) {}
-    //
-    // pub fn set_atk(&mut self, atk: f32) {}
+    pub fn set_chorus_speed(&mut self, speed: f32) {
+        self.chorus.set_speed(speed)
+    }
+
+    pub fn set_chorus_depth(&mut self, depth: f32) {
+        self.chorus.set_volume(depth)
+    }
 
     pub fn set_leslie_speed(&mut self, speed: f32) {
         self.lfo.set_frequency((400.0 * speed) / 60.0)
