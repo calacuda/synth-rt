@@ -222,8 +222,10 @@ impl Synth {
     // pub fn set_atk(&mut self, atk: f32) {}
     //
     // pub fn set_atk(&mut self, atk: f32) {}
-    //
-    // pub fn set_atk(&mut self, atk: f32) {}
-    //
+
+    pub fn set_leslie_speed(&mut self, speed: f32) {
+        self.lfo.set_frequency((400.0 * speed) / 60.0)
+    }
+
     // pub fn set_atk(&mut self, atk: f32) {}
 }
