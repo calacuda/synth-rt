@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use midi_control::{KeyEvent, MidiMessage};
+use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
 use std::{
@@ -51,53 +51,21 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
         bail!("no serial ports found");
     };
 
-    // println!("port => {}", port.as_os_str().to_string_lossy());
-
     let mut serial_port =
         serialport::new(format!("{}", port.as_os_str().to_string_lossy()), 32_500)
             .timeout(Duration::from_millis(u64::MAX))
             .open()?;
-    // else {
-    //     // continue;
-    // //
-    // };
 
     let mut reader = BufReader::new(serial_port);
 
     loop {
         // read serial untill it can be read as midi
-        let mut midi_cmd = String::with_capacity(10); // [0; 10];
-                                                      // let mut i = 0;
-                                                      // .expect("Failed to open serial port");
-                                                      // let _ = serial_port.read(&mut []);
-
-        // while MidiMessage::from(midi_cmd.as_ref()) == MidiMessage::Invalid {
-        // read serial
-        // let mut buf = [0; 10];
-        // let reader =
-        // if let Err(e) = serial_port.read(&mut midi_cmd) {
-        //     println!("{e}");
-        //     // println!("error reading serial port");
-        //     // break;
-        //     continue;
-        // };
+        let mut midi_cmd = String::with_capacity(10);
 
         if let Err(e) = reader.read_line(&mut midi_cmd) {
             println!("{e}");
             continue;
         }
-
-        // println!("midi_cmd +> {midi_cmd}");
-
-        // for i in 0..i_inc {
-        //     midi_cmd.push()
-        // }
-        // midi_cmd.append(&mut buf[0..i_inc].to_vec());
-        // println!("buffer => {:?}", buf);
-        // println!("midi_cmd_buf => {midi_cmd:?}");
-        // println!("midi cmd => {:?}", MidiMessage::from(midi_cmd.as_ref()));
-        // i += i_inc
-        // }
 
         // parse into midi command
         let synth = synth.clone();
@@ -122,12 +90,24 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
                     }
                     MidiMessage::PitchBend(_, lsb, msb) => {
                         let bend = i16::from_le_bytes([lsb, msb]) as f32 / (32_000.0 * 0.5) - 1.0;
-                        // println!("bend => {bend}");
 
                         if bend > 0.026 || bend < -0.026 {
                             synth.lock().unwrap().bend_all(bend);
                         } else {
                             synth.lock().unwrap().unbend();
+                        }
+                    }
+                    MidiMessage::ControlChange(_, ControlEvent { control, value }) => {
+                        let value = value as f32 / 127.0;
+
+                        match control {
+                            70 => synth.lock().unwrap().set_volume(value),
+                            71 => synth.lock().unwrap().set_atk(value),
+                            72 => synth.lock().unwrap().set_decay(value),
+                            73 => synth.lock().unwrap().set_sus(value),
+                            74 => synth.lock().unwrap().set_cutoff(value),
+                            75 => synth.lock().unwrap().set_resonace(value),
+                            _ => {}
                         }
                     }
                     _ => {} // }

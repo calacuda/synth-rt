@@ -7,5 +7,6 @@ edition = "2021"
 anyhow = { version = "1.0.89", features = ["backtrace"] }
 glob = "0.3.1"
 midi-control = { version = "0.2.2", default-features = false }
+num-traits = "0.2.19"
 rodio = "0.19.0"
 serialport = { version = "4.5.1", default-features = false }

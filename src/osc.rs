@@ -1,4 +1,4 @@
-use crate::{env::ADSR, synth::WAVE_TABLE_SIZE, SAMPLE_RATE};
+use crate::{env::ADSR, moog_filter::LowPass, synth::WAVE_TABLE_SIZE, SAMPLE_RATE};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Overtone {
@@ -56,6 +56,7 @@ pub struct Oscillator {
     frequency: f32,
     base_frequency: f32,
     note_space: f32,
+    pub low_pass: LowPass,
 }
 
 impl Oscillator {
@@ -67,6 +68,7 @@ impl Oscillator {
             frequency: 0.0,
             base_frequency: 0.0,
             note_space: 2.0_f32.powf(1.0 / 12.0),
+            low_pass: LowPass::new(),
         }
     }
 
@@ -104,7 +106,7 @@ impl Oscillator {
         }
         // println!("osc sample => {sample}");
 
-        sample
+        self.low_pass.get_sample(sample, env)
     }
 
     pub fn vibrato(&mut self, amt: f32) {

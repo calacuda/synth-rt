@@ -17,7 +17,7 @@ pub struct ADSR {
 
 impl ADSR {
     pub fn new() -> Self {
-        let base_params = [0.0, 0.01, -0.01, 0.5, -0.01];
+        let base_params = [0.0, 0.1, 0.1, 0.5, 0.01];
 
         Self {
             sample_rate: SAMPLE_RATE,
@@ -45,11 +45,11 @@ impl ADSR {
     }
 
     fn calc_decay(decay_speed: f32, sustain_level: f32) -> f32 {
-        (1.0 + sustain_level) / (decay_speed * SAMPLE_RATE as f32)
+        (-1.0 + sustain_level) / (decay_speed * SAMPLE_RATE as f32)
     }
 
     fn calc_release(release_speed: f32, sustain_level: f32) -> f32 {
-        (1.0 + sustain_level) / (release_speed * SAMPLE_RATE as f32)
+        (-1.0 + sustain_level) / (release_speed * SAMPLE_RATE as f32)
     }
 
     pub fn set_atk(&mut self, atk: f32) {

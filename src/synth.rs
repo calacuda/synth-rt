@@ -1,9 +1,8 @@
-use midi_control::MidiNote;
-
 use crate::{
     lfo::LFO,
     osc::{Oscillator, Overtone},
 };
+use midi_control::MidiNote;
 
 pub const WAVE_TABLE_SIZE: usize = 256;
 pub const VOICES: usize = 10;
@@ -33,18 +32,18 @@ impl Synth {
             }),
             Some(Overtone {
                 overtone: 3.0,
-                volume: 0.0 / 8.0,
+                volume: 3.0 / 8.0,
             }),
             Some(Overtone {
                 overtone: 4.0,
-                volume: 0.0 / 8.0,
+                volume: 5.0 / 8.0,
             }),
             Some(Overtone {
                 overtone: 5.0,
-                volume: 0.0 / 8.0,
+                volume: 8.0 / 8.0,
             }),
             Some(Overtone {
-                overtone: 7.0,
+                overtone: 6.0,
                 volume: 0.0 / 8.0,
             }),
             Some(Overtone {
@@ -177,4 +176,54 @@ impl Synth {
             }
         }
     }
+
+    pub fn set_volume(&mut self, vol: f32) {
+        self.volume = vol;
+    }
+
+    pub fn set_atk(&mut self, atk: f32) {
+        for osc in self.osc_s.iter_mut() {
+            osc.env_filter.set_atk(atk);
+        }
+    }
+
+    pub fn set_decay(&mut self, decay: f32) {
+        for osc in self.osc_s.iter_mut() {
+            osc.env_filter.set_decay(decay);
+        }
+    }
+
+    pub fn set_sus(&mut self, sus: f32) {
+        for osc in self.osc_s.iter_mut() {
+            osc.env_filter.set_sus(sus);
+        }
+    }
+
+    // pub fn set_release(&mut self, atk: f32) {
+    //     for osc in self.osc_s.iter_mut() {
+    //         osc.env_filter.set_re(atk);
+    //     }
+    // }
+
+    pub fn set_cutoff(&mut self, cutoff: f32) {
+        let cutoff = cutoff * 10_000.0;
+
+        for osc in self.osc_s.iter_mut() {
+            osc.low_pass.set_cutoff(cutoff);
+        }
+    }
+
+    pub fn set_resonace(&mut self, resonace: f32) {
+        for osc in self.osc_s.iter_mut() {
+            osc.low_pass.set_resonace(resonace);
+        }
+    }
+
+    // pub fn set_atk(&mut self, atk: f32) {}
+    //
+    // pub fn set_atk(&mut self, atk: f32) {}
+    //
+    // pub fn set_atk(&mut self, atk: f32) {}
+    //
+    // pub fn set_atk(&mut self, atk: f32) {}
 }
