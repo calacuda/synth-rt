@@ -35,7 +35,7 @@ impl ADSR {
         tweek_env_by[DECAY] = Self::calc_decay(base_params[DECAY], base_params[SUSTAIN]);
         tweek_env_by[RELEASE] = Self::calc_release(base_params[RELEASE], base_params[SUSTAIN]);
 
-        println!("{}", tweek_env_by[DECAY]);
+        // println!("{}", tweek_env_by[DECAY]);
 
         tweek_env_by
     }
