@@ -109,7 +109,7 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
                             75 => synth.lock().unwrap().set_resonace(value),
                             76 => synth.lock().unwrap().set_chorus_depth(value),
                             77 => synth.lock().unwrap().set_chorus_speed(value),
-                            // 77 => synth.lock().unwrap().set_leslie_speed(value),
+                            1 => synth.lock().unwrap().set_leslie_speed(value),
                             _ => {}
                         }
                     }
