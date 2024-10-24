@@ -128,7 +128,7 @@ impl Oscillator {
 
     pub fn bend(&mut self, bend: f32) {
         // println!("bending");
-        let new_freq = self.base_frequency * 2.0_f32.powf((bend * 4.0) / 12.0);
+        let new_freq = self.base_frequency * 2.0_f32.powf((bend * 3.0) / 12.0);
         // + self.frequency;
         self.wt_osc.set_frequency(new_freq);
         // println!("frequency => {}", self.frequency);
