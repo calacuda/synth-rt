@@ -4,13 +4,140 @@ use crate::{
     osc::{Oscillator, Overtone},
 };
 use midi_control::MidiNote;
+use std::{ops::Index, sync::Arc};
+
+pub type WaveTable = Arc<[f32]>;
+// pub type WaveTables = [(WaveTable, f32); 2];
 
 pub const WAVE_TABLE_SIZE: usize = 256;
 pub const VOICES: usize = 10;
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum OscType {
+    Sin,
+    Tri,
+    Sqr,
+    Saw,
+}
+
+pub struct WaveTables {
+    pub sin: WaveTable,
+    pub tri: WaveTable,
+    pub sqr: WaveTable,
+    pub saw: WaveTable,
+}
+
+impl WaveTables {
+    pub fn new(overtones: &[Overtone]) -> Self {
+        Self {
+            sin: Self::build_sine_table(overtones),
+            tri: Self::build_triangle_table(overtones),
+            sqr: Self::build_square_table(overtones),
+            saw: Self::build_saw_table(overtones),
+        }
+    }
+
+    fn build_saw_table(overtones: &[Overtone]) -> WaveTable {
+        let mut wave_table = [0.0; WAVE_TABLE_SIZE];
+
+        let n_overtones = overtones.len();
+
+        let bias = 1.0 / n_overtones as f32;
+
+        for i in 0..WAVE_TABLE_SIZE {
+            for ot in overtones {
+                wave_table[i] += (((i as f64 % ot.overtone) - 1.0) * ot.volume) as f32
+            }
+
+            wave_table[i] *= bias;
+        }
+
+        wave_table.into()
+    }
+
+    fn build_square_table(overtones: &[Overtone]) -> WaveTable {
+        let mut wave_table = [0.0; WAVE_TABLE_SIZE];
+
+        let n_overtones = overtones.len();
+
+        let bias = 1.0 / n_overtones as f32;
+
+        for i in 0..WAVE_TABLE_SIZE {
+            for ot in overtones {
+                if (i as f64 % ot.overtone as f64) < 1.0 {
+                    wave_table[i] += ot.volume as f32
+                }
+            }
+
+            wave_table[i] *= bias;
+        }
+
+        wave_table.into()
+    }
+
+    fn build_triangle_table(overtones: &[Overtone]) -> WaveTable {
+        let mut wave_table = [0.0; WAVE_TABLE_SIZE];
+
+        let n_overtones = overtones.len();
+
+        let bias = 1.0 / n_overtones as f32;
+
+        for i in 0..WAVE_TABLE_SIZE {
+            for ot in overtones {
+                wave_table[i] += (((i as f64 % ot.overtone as f64) - 1.0).abs() * ot.volume) as f32
+            }
+
+            wave_table[i] *= bias;
+        }
+
+        // println!("bigest build_triangle_table {:?}", wave_table.iter().max());
+
+        wave_table.into()
+    }
+
+    fn build_sine_table(overtones: &[Overtone]) -> WaveTable {
+        let mut wave_table = [0.0; WAVE_TABLE_SIZE];
+
+        let n_overtones = overtones.len();
+
+        let bias = 1.0 / n_overtones as f32;
+
+        for i in 0..WAVE_TABLE_SIZE {
+            for ot in overtones {
+                wave_table[i] += ((2.0 * core::f64::consts::PI * i as f64 * ot.overtone
+                    / WAVE_TABLE_SIZE as f64)
+                    .sin()
+                    * ot.volume) as f32
+            }
+
+            wave_table[i] *= bias;
+        }
+
+        wave_table.into()
+    }
+
+    fn index(&self, index: &Arc<[(OscType, f32)]>) -> Arc<[(WaveTable, f32)]> {
+        index
+            .iter()
+            .map(|(osc_type, vol)| {
+                (
+                    match osc_type {
+                        OscType::Sin => self.sin.clone(),
+                        OscType::Tri => self.tri.clone(),
+                        OscType::Sqr => self.sqr.clone(),
+                        OscType::Saw => self.saw.clone(),
+                    },
+                    vol / index.len() as f32,
+                )
+            })
+            .collect()
+    }
+}
+
 pub struct Synth {
     osc_s: [Oscillator; VOICES],
-    wave_table: [f32; WAVE_TABLE_SIZE],
+    wave_tables: WaveTables,
+    osc_type: Arc<[(OscType, f32)]>,
     lfo: LFO,
     volume: f32,
     chorus: Chorus,
@@ -19,86 +146,69 @@ pub struct Synth {
 impl Synth {
     pub fn new() -> Self {
         let overtones = [
-            Some(Overtone {
+            Overtone {
                 overtone: 1.0_f64.powf(1.0 / 12.0),
                 volume: 1.0,
-            }),
-            Some(Overtone {
+            },
+            Overtone {
                 // overtone: 2.0_f64.powf(1.0 / 12.0),
                 overtone: 2.5_f64.powf(1.0 / 12.0),
                 volume: 1.0,
-            }),
-            Some(Overtone {
+            },
+            Overtone {
                 overtone: 2.0,
                 volume: 1.0,
-            }),
-            Some(Overtone {
+            },
+            Overtone {
                 overtone: 3.0,
-                volume: 3.0 / 8.0,
-            }),
-            Some(Overtone {
+                volume: 1.0,
+            },
+            Overtone {
                 overtone: 4.0,
-                volume: 5.0 / 8.0,
-            }),
-            Some(Overtone {
+                volume: 1.0,
+            },
+            Overtone {
                 overtone: 5.0,
-                volume: 8.0 / 8.0,
-            }),
-            Some(Overtone {
+                volume: 1.0,
+            },
+            Overtone {
                 overtone: 6.0,
-                volume: 0.0 / 8.0,
-            }),
-            Some(Overtone {
+                volume: 1.0,
+            },
+            Overtone {
                 overtone: 8.0,
-                volume: 0.0 / 8.0,
-            }),
-            None,
-            None,
+                volume: 1.0,
+            },
+            Overtone {
+                overtone: 9.0,
+                volume: 1.0,
+            },
+            Overtone {
+                overtone: 10.0,
+                volume: 1.0,
+            },
         ];
-        let wave_table = Self::build_wave_table(overtones);
+        let wave_tables = WaveTables::new(&overtones);
         let mut lfo = LFO::new();
         lfo.set_frequency(400.0 / 60.0);
 
         Self {
             osc_s: [Oscillator::new(); VOICES],
-            wave_table,
+            wave_tables,
+            osc_type: Arc::new([
+                (OscType::Sin, 1.0),
+                // (OscType::Saw, 0.33),
+                // (OscType::Tri, 0.75),
+            ]),
+            // osc_type: Arc::new([(OscType::Tri, 1.0)]),
             lfo,
             volume: 0.75,
             chorus: Chorus::new(),
         }
     }
 
-    fn build_wave_table(overtones: [Option<Overtone>; 10]) -> [f32; WAVE_TABLE_SIZE] {
-        let mut wave_table = [0.0; WAVE_TABLE_SIZE];
-
-        let mut n_overtones = 0;
-
-        for ot in overtones {
-            if ot.is_some() {
-                n_overtones += 1;
-            }
-        }
-
-        let bias = 1.0 / n_overtones as f32;
-
-        for i in 0..WAVE_TABLE_SIZE {
-            for ot in overtones {
-                if let Some(ot) = ot {
-                    wave_table[i] += ((2.0 * core::f64::consts::PI * i as f64 * ot.overtone
-                        / WAVE_TABLE_SIZE as f64)
-                        .sin()
-                        * ot.volume) as f32
-                }
-            }
-
-            wave_table[i] *= bias;
-        }
-
-        wave_table
-    }
-
-    pub fn set_overtones(&mut self, overtones: [Option<Overtone>; 10]) {
-        self.wave_table = Self::build_wave_table(overtones);
+    pub fn set_overtones(&mut self, overtones: &[Overtone]) {
+        self.wave_tables = WaveTables::new(overtones);
     }
 
     pub fn get_sample(&mut self) -> f32 {
@@ -111,7 +221,7 @@ impl Synth {
             if osc.playing.is_some() {
                 osc.vibrato(lfo_sample);
                 // println!("playing");
-                sample += osc.get_sample(&self.wave_table);
+                sample += osc.get_sample(&self.wave_tables.index(&self.osc_type));
                 // println!(
                 //     "env => {}, {}",
                 //     osc.env_filter.get_samnple(),
