@@ -3,3 +3,18 @@ linker = "aarch64-linux-gnu-gcc"
 rustflags = [
     "-C", "link-arg=--sysroot=./cross-build-deps/aarch64/",
 ]
+
+[target.x64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[unstable]
+codegen-backend = true
+
+[profile.dev]
+codegen-backend = "cranelift"
+
+[profile.dev.package."*"]
+codegen-backend = "llvm"
+
+
