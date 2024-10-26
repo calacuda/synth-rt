@@ -17,3 +17,11 @@ setup-aarch64:
   # TODO: extract
   # TODO: rm dep archive files
 
+setup-armv7:
+  mkdir -p ./cross-build-deps/armv7/
+  wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/libx11-1.8.10-1-armv7h.pkg.tar.xz
+  wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/core/pkgconf-2.1.1-1-armv7h.pkg.tar.xz 
+  wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/core/glibc-2.39+r52+gf8e4623421-1-armv7h.pkg.tar.xz
+  wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/alsa-lib-1.2.12-1-armv7h.pkg.tar.xz
+  cd ./cross-build-deps/armv7; for f in $(ls *.pkg.tar.xz); do tar xf $f; done
+
