@@ -14,7 +14,7 @@ impl Chorus {
             size: SAMPLE_RATE as usize,
             buff: [0.0; SAMPLE_RATE as usize],
             i: 0,
-            step: 0,
+            step: 1,
             volume: 0.75,
         }
     }

@@ -46,10 +46,15 @@ impl WaveTables {
 
         for i in 0..WAVE_TABLE_SIZE {
             for ot in overtones {
-                wave_table[i] += (((i as f64 % ot.overtone) - 1.0) * ot.volume) as f32
+                // wave_table[i] += (((i as f64 % ot.overtone) - 1.0) * ot.volume) as f32
+                wave_table[i] +=
+                    ((((i as f64 * ((4.0 * ot.overtone) / WAVE_TABLE_SIZE as f64)) % 2.0) - 1.0)
+                        * ot.volume) as f32;
+                // break;
             }
 
             wave_table[i] *= bias;
+            // println!("saw tooth => {}", wave_table[i]);
         }
 
         wave_table.into()
@@ -196,8 +201,8 @@ impl Synth {
             osc_s: [Oscillator::new(); VOICES],
             wave_tables,
             osc_type: Arc::new([
-                (OscType::Sin, 1.0),
-                // (OscType::Saw, 0.33),
+                // (OscType::Sin, 1.0),
+                (OscType::Saw, 1.0),
                 // (OscType::Tri, 0.75),
             ]),
             // osc_type: Arc::new([(OscType::Tri, 1.0)]),
@@ -342,7 +347,8 @@ impl Synth {
     }
 
     pub fn set_leslie_speed(&mut self, speed: f32) {
-        self.lfo.set_frequency((400.0 * speed) / 60.0)
+        self.lfo.set_frequency((400.0 * speed) / 60.0);
+        self.lfo.set_volume(speed);
     }
 
     // pub fn set_atk(&mut self, atk: f32) {}

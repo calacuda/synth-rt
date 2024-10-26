@@ -8,6 +8,7 @@ pub struct LFO {
     wave_table: [f32; LFO_WAVE_TABLE_SIZE],
     index: f32,
     index_increment: f32,
+    volume: f32,
 }
 
 impl LFO {
@@ -17,6 +18,7 @@ impl LFO {
             wave_table: Self::build_wave_table(),
             index: 0.0,
             index_increment: 0.0,
+            volume: 1.0,
         }
     }
 
@@ -34,11 +36,15 @@ impl LFO {
         self.index_increment = frequency * LFO_WAVE_TABLE_SIZE as f32 / self.sample_rate as f32;
     }
 
+    pub fn set_volume(&mut self, volume: f32) {
+        self.volume = volume;
+    }
+
     pub fn get_sample(&mut self) -> f32 {
         let sample = self.lerp();
         self.index += self.index_increment;
         self.index %= LFO_WAVE_TABLE_SIZE as f32;
-        sample
+        sample * self.volume
     }
 
     fn lerp(&self) -> f32 {
