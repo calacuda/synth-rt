@@ -5,7 +5,14 @@ rustflags = [
 ]
 
 [target.armv7-unknown-linux-gnueabihf]
-linker = "arm-linux-gnu-gcc"
+linker = "arm-linux-gnueabihf-gcc"
+rustflags = [
+    "-C", "link-arg=--sysroot=./cross-build-deps/armv7/",
+]
+
+[target.armv7-unknown-linux-musleabihf]
+# linker = "arm-linux-gnueabihf-gcc"
+linker = "arm-linux-musleabihf-gcc"
 rustflags = [
     "-C", "link-arg=--sysroot=./cross-build-deps/armv7/",
 ]
