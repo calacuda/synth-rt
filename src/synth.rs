@@ -204,6 +204,7 @@ impl Synth {
                 // (OscType::Sin, 1.0),
                 (OscType::Saw, 1.0),
                 // (OscType::Tri, 0.75),
+                // (OscType::Sqr, 1.0),
             ]),
             // osc_type: Arc::new([(OscType::Tri, 1.0)]),
             lfo,
