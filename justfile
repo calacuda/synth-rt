@@ -23,7 +23,6 @@ setup-aarch64:
   # TODO: extract
   # TODO: rm dep archive files
 
-# TODO: install from debian and use debtap then extract
 setup-armv7:
   mkdir -p ./cross-build-deps/armv7/
   wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/libx11-1.8.10-1-armv7h.pkg.tar.xz
