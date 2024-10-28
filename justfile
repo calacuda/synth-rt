@@ -50,8 +50,15 @@ setup-armv7:
   # wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/at-spi2-atk-2.38.0-1-armv7h.pkg.tar.xz
   # wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/libsoup3-3.6.0-1-armv7h.pkg.tar.xz
   # wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/at-spi2-core-2.54.0-2-armv7h.pkg.tar.xz
-  # wget -P ./cross-build-deps/armv7/ http://http.us.debian.org/debian/pool/main/w/webkit2gtk/libwebkit2gtk-4.1-dev_2.46.2-1_armhf.deb
+  # # wget -P ./cross-build-deps/armv7/ http://tardis.tiny-vps.com/aarm/packages/w/webkit2gtk-4.1/webkit2gtk-4.1-2.38.0-2-armv7h.pkg.tar.xz
+  # # wget -P ./cross-build-deps/armv7/ http://http.us.debian.org/debian/pool/main/w/webkit2gtk/libwebkit2gtk-4.1-dev_2.46.2-1_armhf.deb
+  # # cd ./cross-build-deps/armv7/; debtap -Q ./libwebkit2gtk-4*.deb; rm libwebkit2gtk-4*.deb
+  # wget -P ./cross-build-deps/armv7/ http://security.debian.org/debian-security/pool/updates/main/w/webkit2gtk/libwebkit2gtk-4.1-dev_2.46.0-2~deb12u1_armhf.deb
   # cd ./cross-build-deps/armv7/; debtap -Q ./libwebkit2gtk-4*.deb; rm libwebkit2gtk-4*.deb
+  wget -P ./cross-build-deps/armv7/ http://security.debian.org/debian-security/pool/updates/main/w/webkit2gtk/libwebkit2gtk-4.1-0_2.46.0-2~deb12u1_armhf.deb
+  cd ./cross-build-deps/armv7/; debtap -Q ./libwebkit2gtk-4*.deb; rm libwebkit2gtk-4*.deb
+  # wget -P ./cross-build-deps/armv7/ http://security.debian.org/debian-security/pool/updates/main/w/webkit2gtk/webkit2gtk-driver_2.46.0-2~deb12u1_armhf.deb
+  # cd ./cross-build-deps/armv7/; debtap -Q ./webkit2gtk*; rm webkit2gtk*
   # wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/fontconfig-2:2.15.0-2-armv7h.pkg.tar.xz
   # wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/extra/libxkbcommon-1.7.0-2-armv7h.pkg.tar.xz
   # wget -P ./cross-build-deps/armv7/ http://mirror.archlinuxarm.org/armv7h/core/dbus-1.14.10-2-armv7h.pkg.tar.xz
@@ -101,9 +108,9 @@ setup-armv7:
   # wget -P ./cross-build-deps/armv7/
   # wget -P ./cross-build-deps/armv7/
   # wget -P ./cross-build-deps/armv7/
-  # wget -P ./cross-build-deps/armv7/
   # wget -P ./cross-build-deps/armv7/ 
-  cd ./cross-build-deps/armv7; for f in $(ls *.pkg.tar.*); do tar xf ./$f; rm $f; done
+  cd ./cross-build-deps/armv7; ls *.pkg.tar.*; for f in $(ls *.pkg.tar.*); do tar xf ./$f; rm $f; done
+  cp -r cross-build-deps/armv7/usr/lib/arm-linux-gnueabihf/* cross-build-deps/armv7/usr/lib/
 
 surface-transfer:
   python -m http.server -d target/armv7-unknown-linux-gnueabihf/debug/ 8080
