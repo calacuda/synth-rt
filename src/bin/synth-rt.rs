@@ -7,6 +7,7 @@ use bevy::{
     winit::WinitSettings,
 };
 use bevy_framepace::{FramepaceSettings, Limiter};
+use bevy_ui::{osc_ctrl::spawn_osc_ctrl, overtones::spawn_overtones};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
@@ -20,6 +21,8 @@ use std::{
     time::Duration,
 };
 use synth_rt::{synth::Synth, Player};
+
+pub mod bevy_ui;
 
 #[derive(Resource)]
 pub struct SynthMarker(Arc<Mutex<Synth>>);
@@ -70,266 +73,262 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             style: Style {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
-                justify_content: JustifyContent::SpaceBetween,
+                justify_content: JustifyContent::SpaceEvenly,
+                flex_direction: FlexDirection::Column,
                 ..default()
             },
             ..default()
         })
         .with_children(|parent| {
-            // left vertical fill (border)
+            // waveform-visualizer
             parent
                 .spawn(NodeBundle {
                     style: Style {
-                        width: Val::Px(200.),
-                        border: UiRect::all(Val::Px(2.)),
+                        width: Val::Percent(100.0),
+                        border: UiRect::all(Val::Px(8.)),
+                        height: Val::Percent(20.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
                         ..default()
                     },
                     background_color: Color::srgb(0.65, 0.65, 0.65).into(),
                     ..default()
                 })
-                .with_children(|parent| {
-                    // left vertical fill (content)
-                    parent
-                        .spawn(NodeBundle {
-                            style: Style {
-                                width: Val::Percent(100.),
-                                flex_direction: FlexDirection::Column,
-                                padding: UiRect::all(Val::Px(5.)),
-                                row_gap: Val::Px(5.),
-                                ..default()
-                            },
-                            background_color: Color::srgb(0.15, 0.15, 0.15).into(),
-                            ..default()
-                        })
-                        .with_children(|parent| {
-                            // text
-                            parent.spawn((
-                                TextBundle::from_section(
-                                    "Text Example",
-                                    TextStyle {
-                                        font: asset_server.load("fonts/Anonymous Pro B.ttf"),
-                                        font_size: 30.0,
-                                        ..default()
-                                    },
-                                ),
-                                // Because this is a distinct label widget and
-                                // not button/list item text, this is necessary
-                                // for accessibility to treat the text accordingly.
-                                Label,
-                            ));
-
-                            #[cfg(feature = "bevy_dev_tools")]
-                            // Debug overlay text
-                            parent.spawn((
-                                TextBundle::from_section(
-                                    "Press Space to enable debug outlines.",
-                                    TextStyle {
-                                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                        ..default()
-                                    },
-                                ),
-                                Label,
-                            ));
-
-                            #[cfg(not(feature = "bevy_dev_tools"))]
-                            parent.spawn((
-                                TextBundle::from_section(
-                                    "Try enabling feature \"bevy_dev_tools\".",
-                                    TextStyle {
-                                        font: asset_server.load("fonts/Anonymous Pro B.ttf"),
-                                        ..default()
-                                    },
-                                ),
-                                Label,
-                            ));
-                        });
-                });
-            // right vertical fill
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        flex_direction: FlexDirection::Column,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        width: Val::Px(200.),
-                        ..default()
-                    },
-                    background_color: Color::srgb(0.15, 0.15, 0.15).into(),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    // Title
-                    parent.spawn((
-                        TextBundle::from_section(
-                            "Scrolling list",
+                .with_children(|parent: &mut ChildBuilder<'_>| {
+                    parent.spawn(TextBundle {
+                        text: Text::from_section(
+                            "WAVEFORM-VISUALIZER",
                             TextStyle {
                                 font: asset_server.load("fonts/Anonymous Pro B.ttf"),
-                                font_size: 25.,
-                                ..default()
+                                font_size: 60.0,
+                                color: Color::BLACK,
                             },
                         ),
-                        Label,
-                    ));
-                    // List with hidden overflow
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            flex_direction: FlexDirection::Column,
-                            align_self: AlignSelf::Stretch,
-                            height: Val::Percent(50.),
-                            overflow: Overflow::clip_y(),
-                            ..default()
-                        },
-                        background_color: Color::srgb(0.10, 0.10, 0.10).into(),
                         ..default()
                     });
                 });
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        width: Val::Px(200.0),
-                        height: Val::Px(200.0),
-                        position_type: PositionType::Absolute,
-                        left: Val::Px(210.),
-                        bottom: Val::Px(10.),
-                        border: UiRect::all(Val::Px(20.)),
-                        ..default()
-                    },
-                    border_color: LIME.into(),
-                    background_color: Color::srgb(0.4, 0.4, 1.).into(),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            width: Val::Percent(100.0),
-                            height: Val::Percent(100.0),
-                            ..default()
-                        },
-                        background_color: Color::srgb(0.8, 0.8, 1.).into(),
-                        ..default()
-                    });
-                });
-            // render order test: reddest in the back, whitest in the front (flex center)
+
+            // ADSR and Low pass vis
             parent
                 .spawn(NodeBundle {
                     style: Style {
                         width: Val::Percent(100.0),
-                        height: Val::Percent(100.0),
-                        position_type: PositionType::Absolute,
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
+                        border: UiRect::all(Val::Px(8.)),
+                        height: Val::Percent(20.0),
+                        flex_direction: FlexDirection::Row,
                         ..default()
                     },
+                    // background_color: Color::srgb(0.65, 0.65, 0.65).into(),
                     ..default()
                 })
-                .with_children(|parent| {
+                .with_children(|parent: &mut ChildBuilder<'_>| {
+                    // ADSR vis
                     parent
                         .spawn(NodeBundle {
                             style: Style {
-                                width: Val::Px(100.0),
-                                height: Val::Px(100.0),
+                                width: Val::Percent(50.0),
+                                border: UiRect::all(Val::Px(8.)),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Row,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
                             },
-                            background_color: Color::srgb(1.0, 0.0, 0.).into(),
+                            background_color: Color::srgb(0.65, 0.65, 0.65).into(),
                             ..default()
                         })
-                        .with_children(|parent| {
-                            parent.spawn(NodeBundle {
-                                style: Style {
-                                    // Take the size of the parent node.
-                                    width: Val::Percent(100.0),
-                                    height: Val::Percent(100.0),
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Px(20.),
-                                    bottom: Val::Px(20.),
-                                    ..default()
-                                },
-                                background_color: Color::srgb(1.0, 0.3, 0.3).into(),
+                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                            parent.spawn(TextBundle {
+                                text: Text::from_section(
+                                    "ADSR Visualizer",
+                                    TextStyle {
+                                        font: asset_server.load("fonts/Anonymous Pro B.ttf"),
+                                        font_size: 60.0,
+                                        color: Color::BLACK,
+                                    },
+                                ),
                                 ..default()
                             });
-                            parent.spawn(NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.0),
-                                    height: Val::Percent(100.0),
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Px(40.),
-                                    bottom: Val::Px(40.),
-                                    ..default()
-                                },
-                                background_color: Color::srgb(1.0, 0.5, 0.5).into(),
+                        });
+
+                    // LowPass vis
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(50.0),
+                                border: UiRect::all(Val::Px(8.)),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Row,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
-                            });
-                            parent.spawn(NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.0),
-                                    height: Val::Percent(100.0),
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Px(60.),
-                                    bottom: Val::Px(60.),
-                                    ..default()
-                                },
-                                background_color: Color::srgb(1.0, 0.7, 0.7).into(),
-                                ..default()
-                            });
-                            // alpha test
-                            parent.spawn(NodeBundle {
-                                style: Style {
-                                    width: Val::Percent(100.0),
-                                    height: Val::Percent(100.0),
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Px(80.),
-                                    bottom: Val::Px(80.),
-                                    ..default()
-                                },
-                                background_color: Color::srgba(1.0, 0.9, 0.9, 0.4).into(),
+                            },
+                            background_color: Color::srgb(0.65, 0.65, 0.65).into(),
+                            ..default()
+                        })
+                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                            parent.spawn(TextBundle {
+                                text: Text::from_section(
+                                    "LOW PASS Vis",
+                                    TextStyle {
+                                        font: asset_server.load("fonts/Anonymous Pro B.ttf"),
+                                        font_size: 60.0,
+                                        color: Color::BLACK,
+                                    },
+                                ),
                                 ..default()
                             });
                         });
                 });
-            // bevy logo (flex center)
+
+            // bottom pannel
             parent
                 .spawn(NodeBundle {
                     style: Style {
                         width: Val::Percent(100.0),
-                        position_type: PositionType::Absolute,
+                        border: UiRect::all(Val::Px(8.)),
+                        height: Val::Percent(60.0),
+                        flex_direction: FlexDirection::Row,
                         justify_content: JustifyContent::Center,
-                        align_items: AlignItems::FlexStart,
+                        align_items: AlignItems::Center,
                         ..default()
                     },
                     ..default()
                 })
-                .with_children(|parent| {
-                    // bevy logo (image)
-                    // A `NodeBundle` is used to display the logo the image as an `ImageBundle` can't automatically
-                    // size itself with a child node present.
+                .with_children(|parent: &mut ChildBuilder<'_>| {
+                    // osc view
                     parent
-                        .spawn((
-                            NodeBundle {
-                                style: Style {
-                                    width: Val::Px(500.0),
-                                    height: Val::Px(125.0),
-                                    margin: UiRect::top(Val::VMin(5.)),
-                                    ..default()
-                                },
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(25.0),
+                                border: UiRect::all(Val::Px(8.)),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Row,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
                             },
-                            UiImage::new(asset_server.load("branding/bevy_logo_dark_big.png")),
-                        ))
-                        .with_children(|parent| {
-                            // alt text
-                            // This UI node takes up no space in the layout and the `Text` component is used by the accessibility module
-                            // and is not rendered.
-                            parent.spawn((
-                                NodeBundle {
+                            ..default()
+                        })
+                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                            parent
+                                .spawn(NodeBundle {
                                     style: Style {
-                                        display: Display::None,
-                                        ..Default::default()
+                                        width: Val::Percent(100.0),
+                                        // border: UiRect::all(Val::Px(8.)),
+                                        height: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Row,
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
                                     },
-                                    ..Default::default()
-                                },
-                                Text::from_section("Bevy logo", TextStyle::default()),
-                            ));
+                                    ..default()
+                                })
+                                .with_children(|parent: &mut ChildBuilder<'_>| {
+                                    parent
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.0),
+                                                // border: UiRect::all(Val::Px(8.)),
+                                                height: Val::Percent(100.0),
+                                                flex_direction: FlexDirection::Column,
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                ..default()
+                                            },
+                                            ..default()
+                                        })
+                                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                                            spawn_osc_ctrl(parent, 0, &asset_server)
+                                        });
+                                })
+                                .with_children(|parent: &mut ChildBuilder<'_>| {
+                                    parent
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.0),
+                                                // border: UiRect::all(Val::Px(8.)),
+                                                height: Val::Percent(100.0),
+                                                flex_direction: FlexDirection::Column,
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                ..default()
+                                            },
+                                            ..default()
+                                        })
+                                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                                            spawn_osc_ctrl(parent, 1, &asset_server)
+                                        });
+                                })
+                                .with_children(|parent: &mut ChildBuilder<'_>| {
+                                    parent
+                                        .spawn(NodeBundle {
+                                            style: Style {
+                                                width: Val::Percent(100.0),
+                                                // border: UiRect::all(Val::Px(8.)),
+                                                height: Val::Percent(100.0),
+                                                flex_direction: FlexDirection::Column,
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                ..default()
+                                            },
+                                            ..default()
+                                        })
+                                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                                            spawn_osc_ctrl(parent, 2, &asset_server)
+                                        });
+                                });
                         });
+
+                    // Overtones
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(65.0),
+                                border: UiRect::all(Val::Px(8.)),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|parent: &mut ChildBuilder<'_>| {
+                            spawn_overtones(parent, &asset_server)
+                        });
+
+                    // chorus & Reverb
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(10.0),
+                                border: UiRect::all(Val::Px(8.)),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|parent: &mut ChildBuilder<'_>| {});
+
+                    // Volume/VU meter
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                width: Val::Percent(10.0),
+                                border: UiRect::all(Val::Px(8.)),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            ..default()
+                        })
+                        .with_children(|parent: &mut ChildBuilder<'_>| {});
                 });
         });
 }
