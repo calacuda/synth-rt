@@ -103,7 +103,7 @@ setup-armv7:
   # wget -P ./cross-build-deps/armv7/
   # wget -P ./cross-build-deps/armv7/
   # wget -P ./cross-build-deps/armv7/ 
-  cd ./cross-build-deps/armv7; for f in $(ls *.pkg.tar.xz); do tar xf ./$f; rm $f; done
+  cd ./cross-build-deps/armv7; for f in $(ls *.pkg.tar.*); do tar xf ./$f; rm $f; done
 
 surface-transfer:
   python -m http.server -d target/armv7-unknown-linux-gnueabihf/debug/ 8080
