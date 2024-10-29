@@ -2,6 +2,8 @@ run:
   cargo tauri dev
 
 surface-build:
-  PKG_CONFIG_SYSROOT_DIR="$PWD/../cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/../cross-build-deps/armv7/usr/lib/pkgconfig/" cargo tauri build --target armv7-unknown-linux-gnueabihf --no-bundle -v
+  PKG_CONFIG_SYSROOT_DIR="$PWD/../cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/../cross-build-deps/armv7/usr/lib/pkgconfig/" /home/yogurt/Code/rust/tauri-zig/target/debug/cargo-tauri-zb build --target armv7-unknown-linux-gnueabihf.2.36 --no-bundle --runner ~/.cargo/bin/cargo-zigbuild
+  # PKG_CONFIG_SYSROOT_DIR="$PWD/../cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/../cross-build-deps/armv7/usr/lib/pkgconfig/" cargo zigbuild --target armv7-unknown-linux-gnueabihf.2.36
+  # PKG_CONFIG_SYSROOT_DIR="$PWD/../cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/../cross-build-deps/armv7/usr/lib/pkgconfig/" cargo tauri build --target armv7-unknown-linux-musleabihf --no-bundle
   # PKG_CONFIG_SYSROOT_DIR="$PWD/cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/cross-build-deps/armv7/usr/lib/pkgconfig/" cargo tauri bundle --target armv7-unknown-linux-gnueabihf
   # PKG_CONFIG_SYSROOT_DIR="$PWD/cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/cross-build-deps/armv7/usr/lib/pkgconfig/" cargo zigbuild --target armv7-unknown-linux-gnueabihf.2.36 --bin synth-rt -r

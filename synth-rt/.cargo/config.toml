@@ -6,16 +6,22 @@
 
 [target.armv7-unknown-linux-gnueabihf]
 linker = "arm-linux-gnueabihf-gcc"
+# linker = "arm-linux-musleabihf-gcc"
 rustflags = [
     "-C", "link-arg=--sysroot=./../cross-build-deps/armv7/",
 ]
 
-# [target.armv7-unknown-linux-musleabihf]
-# # linker = "arm-linux-gnueabihf-gcc"
+[target.armv7-unknown-linux-musleabihf]
+# linker = "arm-linux-gnueabihf-gcc"
 # linker = "arm-linux-musleabihf-gcc"
-# rustflags = [
-#     "-C", "link-arg=--sysroot=./cross-build-deps/armv7/",
-# ]
+# linker = "/opt/muslcc/arm-linux-musleabihf-cross/bin/arm-linux-musleabihf-gcc"
+rustflags = [
+    "-C", "link-arg=--sysroot=./../cross-build-deps/armv7/",
+    # "-C", "link-arg=-lm",
+    # "-C", "link-arg=-lc",
+    # "-C", "link-arg=-lmusl",
+    # "-C", "link-arg=-lc",
+]
 
 [target.x64-unknown-linux-gnu]
 linker = "clang"
@@ -30,4 +36,5 @@ rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 # [profile.dev.package."*"]
 # codegen-backend = "llvm"
 
-
+# [alias] 
+# build = "zigbuild"
