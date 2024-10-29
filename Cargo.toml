@@ -6,10 +6,11 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.91", features = ["backtrace"] }
 # bevy = { version = "0.14.2", default-features = false, features = ["animation", "bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_gilrs", "bevy_gizmos", "bevy_render", "bevy_scene", "bevy_state", "bevy_text", "bevy_ui", "bevy_winit", "default_font", "dynamic_linking", "multi_threaded", "wayland", "x11", "zstd"] }
-bevy = { version = "0.14.2", default-features = false, features = ["animation", "bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_gilrs", "bevy_gizmos", "bevy_render", "bevy_scene", "bevy_state", "bevy_text", "bevy_ui", "bevy_winit", "default_font", "multi_threaded", "x11", "zstd"] }
+# bevy = { version = "0.14.2", default-features = false, features = ["animation", "bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_gilrs", "bevy_gizmos", "bevy_render", "bevy_scene", "bevy_state", "bevy_text", "bevy_ui", "bevy_winit", "default_font", "multi_threaded", "x11", "zstd"] }
 bevy_framepace = "0.17.1"
 bevy_ui = "0.14.2"
 glob = "0.3.1"
+iced = "0.13.1"
 midi-control = { version = "0.2.2", default-features = false }
 midir = "0.10.0"
 num-traits = "0.2.19"
