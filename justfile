@@ -9,7 +9,7 @@ trimui-build:
   adb push ./target/aarch64-unknown-linux-gnu/debug/synth-console /userdata/roms/ports/Synth/
 
 surface-build:
-  PKG_CONFIG_SYSROOT_DIR="$PWD/cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/cross-build-deps/armv7/usr/lib/pkgconfig/" cargo zigbuild --target armv7-unknown-linux-gnueabihf.2.36 --bin synth-rt
+  # PKG_CONFIG_SYSROOT_DIR="$PWD/cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/cross-build-deps/armv7/usr/lib/pkgconfig/" cargo zigbuild --target armv7-unknown-linux-gnueabihf.2.36 --bin synth-rt
   PKG_CONFIG_SYSROOT_DIR="$PWD/cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/cross-build-deps/armv7/usr/lib/pkgconfig/" cargo zigbuild --target armv7-unknown-linux-gnueabihf.2.36 --bin synth-rt -r
   # PKG_CONFIG_SYSROOT_DIR="$PWD/cross-build-deps/armv7/" PKG_CONFIG_PATH="$PWD/cross-build-deps/armv7/usr/lib/pkgconfig/" cargo build --target armv7-unknown-linux-musleabihf --bin synth-rt -r
 
@@ -48,3 +48,15 @@ get-font:
   mv ./assets/fonts/AnonymousPro-1.002.001/*.ttf ./assets/fonts/
   rm -r ./assets/fonts/AnonymousPro-1.002.001/
   rm ./assets/fonts/*.zip
+
+new-window NAME CMD:
+  tmux new-w -t synth-rt -n "{{NAME}}"
+  tmux send-keys -t synth-rt:"{{NAME}}" "{{CMD}}" ENTER
+
+tmux:
+  tmux new -ds synth-rt -n "README"
+  tmux send-keys -t synth-rt:README 'nv ./README.md "+set wrap"' ENTER
+  @just new-window "Edit" ""
+  @just new-window "Run" ""
+  @just new-window "git" "git status"
+  tmux a -t synth-rt

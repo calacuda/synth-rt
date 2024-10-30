@@ -140,12 +140,12 @@ impl WaveTables {
 }
 
 pub struct Synth {
-    osc_s: [Oscillator; VOICES],
-    wave_tables: WaveTables,
-    osc_type: Arc<[(OscType, f32)]>,
-    lfo: LFO,
-    volume: f32,
-    chorus: Chorus,
+    pub osc_s: [Oscillator; VOICES],
+    pub wave_tables: WaveTables,
+    pub osc_type: Arc<[(OscType, f32)]>,
+    pub lfo: LFO,
+    pub volume: f32,
+    pub chorus: Chorus,
 }
 
 impl Synth {
