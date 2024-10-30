@@ -6,6 +6,7 @@ pub struct Chorus {
     pub i: usize,
     pub step: usize,
     pub volume: f32,
+    pub speed: f32,
 }
 
 impl Chorus {
@@ -16,6 +17,7 @@ impl Chorus {
             i: 0,
             step: 1,
             volume: 0.75,
+            speed: 0.0,
         }
     }
 
@@ -35,6 +37,7 @@ impl Chorus {
     /// sets speed, takes speed in seconds
     pub fn set_speed(&mut self, speed: f32) {
         // info!("speed: {}", speed);
+        self.speed = speed;
         self.step = (SAMPLE_RATE as f32 * (speed * 0.05)) as usize;
         // info!("step:  {}", self.step);
     }

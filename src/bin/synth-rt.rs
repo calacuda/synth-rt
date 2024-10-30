@@ -1,5 +1,9 @@
 use anyhow::{bail, Result};
-use iced::widget::{column, row, text, vertical_slider, Column};
+use iced::widget::shader::wgpu::core::device::UserClosures;
+use iced::widget::{
+    button, column, container, horizontal_space, radio, row, text, vertical_slider, vertical_space,
+    Button, Column,
+};
 use iced::Alignment::Center;
 use iced::{Element, Length};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
@@ -14,6 +18,7 @@ use std::{
     thread::{spawn, JoinHandle},
     time::Duration,
 };
+use synth_rt::synth::OscType;
 use synth_rt::{synth::Synth, Player};
 
 pub struct SynthUI {
@@ -24,6 +29,12 @@ pub struct SynthUI {
 #[derive(Debug, Clone)]
 enum Message {
     SetVolume(f32),
+    OscVolume { osc_num: usize, vol: f32 },
+    DetuneOscUp(usize),
+    DetuneOscDown(usize),
+    OscTypeUpdate { osc_num: usize, osc_type: OscType },
+    ChorusVolume(f32),
+    ChorusSpeed(f32),
 }
 
 impl SynthUI {
@@ -37,7 +48,19 @@ impl SynthUI {
     fn update(&mut self, message: Message) {
         // Update the state of your app
         match message {
-            Message::SetVolume(vol) => self.synth.lock().unwrap().set_volume(vol),
+            Message::SetVolume(vol) => self.synth.lock().unwrap().set_volume(vol / 100.0),
+            Message::OscVolume { osc_num, vol } => {
+                self.synth.lock().unwrap().osc_type[osc_num].1 = vol
+            }
+            Message::DetuneOscUp(osc_num) => {}
+            Message::DetuneOscDown(osc_num) => {}
+            Message::OscTypeUpdate { osc_num, osc_type } => {
+                self.synth.lock().unwrap().osc_type[osc_num].0 = osc_type
+            }
+            Message::ChorusVolume(vol) => self.synth.lock().unwrap().chorus.set_volume(vol / 100.0),
+            Message::ChorusSpeed(speed) => {
+                self.synth.lock().unwrap().chorus.set_speed(speed / 100.0)
+            }
         }
     }
 
@@ -61,40 +84,37 @@ impl SynthUI {
             .height(20)
             .width(Length::Fill),
             row![
-                column![self.osc(0), self.osc(1), self.osc(2)]
+                self.osc(0)
                     .align_x(Center)
                     .height(Length::Fill)
-                    .width(Length::FillPortion(250)),
-                column![self.overtones()]
+                    .width(Length::FillPortion(100)),
+                self.osc(1)
                     .align_x(Center)
                     .height(Length::Fill)
-                    .width(Length::FillPortion(500)),
+                    .width(Length::FillPortion(100)),
+                self.osc(2)
+                    .align_x(Center)
+                    .height(Length::Fill)
+                    .width(Length::FillPortion(100)),
+                self.overtones()
+                    .align_x(Center)
+                    .height(Length::Fill)
+                    .width(Length::FillPortion(600)),
                 column![
-                    column![
-                        text!("Chorus").size(12),
-                        text!("Vol.").size(12),
-                        text!("Speed").size(12)
-                    ]
-                    .align_x(Center)
-                    .height(Length::FillPortion(50)),
-                    column![
-                        text!("Reverb").size(12),
-                        text!("Decay").size(12),
-                        text!("Gain").size(12)
-                    ]
-                    .align_x(Center)
-                    .height(Length::FillPortion(50))
+                    self.chorus(),
+                    // column![text!("Reverb").size(24), text!("Decay"), text!("Gain")]
+                    //     .align_x(Center)
+                    //     .height(Length::FillPortion(50))
+                    self.reverb()
                 ]
                 .align_x(Center)
                 .height(Length::Fill)
-                .width(Length::FillPortion(125)),
+                .width(Length::FillPortion(150)),
                 column![self.vu_meter()]
+                    .padding([24, 0])
                     .align_x(Center)
                     .height(Length::Fill)
-                    // ]
-                    .align_x(Center)
-                    .height(Length::Fill)
-                    .width(Length::FillPortion(125))
+                    .width(Length::FillPortion(150))
             ]
             .align_y(Center)
             .height(Length::FillPortion(60))
@@ -107,22 +127,129 @@ impl SynthUI {
         .into()
     }
 
-    fn osc(&self, osc_i: usize) -> Column<'_, Message> {
+    fn reverb(&self) -> Column<'_, Message> {
+        // let decay = vertical_slider(
+        //     0.0..=100.0,
+        //     self.synth.lock().unwrap().reverb.decay * 100.0,
+        //     Message::ChorusVolume,
+        // );
+        //
+        // let gain = vertical_slider(
+        //     0.0..=100.0,
+        //     self.synth.lock().unwrap().reverb.gain * 100.0,
+        //     Message::ChorusSpeed,
+        // );
+
         column![
-            row![text!("Osc {osc_i}").size(24).center()]
+            text!["Reverb"].size(24),
+            text!["Decay"],
+            // decay,
+            text!["Gain"],
+            // gain
+        ]
+        .align_x(Center)
+        .height(Length::FillPortion(50))
+        .into()
+    }
+
+    fn chorus(&self) -> Column<'_, Message> {
+        let volume = vertical_slider(
+            0.0..=100.0,
+            self.synth.lock().unwrap().chorus.volume * 100.0,
+            Message::ChorusVolume,
+        );
+
+        let speed = vertical_slider(
+            0.0..=100.0,
+            self.synth.lock().unwrap().chorus.speed * 100.0,
+            Message::ChorusSpeed,
+        );
+
+        column![
+            text!["Chorus"].size(24),
+            text!["Vol."],
+            volume,
+            text!["Speed"],
+            speed
+        ]
+        .align_x(Center)
+        .height(Length::FillPortion(50))
+        .into()
+    }
+
+    fn osc(&self, osc_i: usize) -> Column<'_, Message> {
+        let volume = vertical_slider(
+            0.0..=100.0,
+            self.synth.lock().unwrap().osc_type[osc_i].1 * 100.0,
+            move |vol| Message::OscVolume {
+                osc_num: osc_i,
+                vol,
+            },
+        );
+
+        let detune = column![
+            // detune up
+            button("Up")
+                // .padding([12, 24])
+                .on_press(Message::DetuneOscUp(osc_i)),
+            vertical_space(),
+            // detune amt
+            // text!("Detune: {}", 0),
+            vertical_space(),
+            // detune down
+            button("Dwn")
+                // .padding([12, 24])
+                .on_press(Message::DetuneOscDown(osc_i)),
+            // horizontal_space(),
+        ];
+
+        let selection = Some(self.synth.lock().unwrap().osc_type[osc_i].0);
+
+        let waveform = column![
+            text!["WaveForm"],
+            radio("Sin", OscType::Sin, selection, |osc_type| {
+                Message::OscTypeUpdate {
+                    osc_num: osc_i,
+                    osc_type,
+                }
+            },),
+            radio("Tri", OscType::Tri, selection, |osc_type| {
+                Message::OscTypeUpdate {
+                    osc_num: osc_i,
+                    osc_type,
+                }
+            },),
+            radio("Saw", OscType::Saw, selection, |osc_type| {
+                Message::OscTypeUpdate {
+                    osc_num: osc_i,
+                    osc_type,
+                }
+            },),
+            radio("Sqr", OscType::Sqr, selection, |osc_type| {
+                Message::OscTypeUpdate {
+                    osc_num: osc_i,
+                    osc_type,
+                }
+            },),
+        ];
+
+        column![
+            text!("Osc {}", osc_i + 1)
+                .size(24)
+                .align_x(Center)
                 .align_y(Center)
                 .height(Length::FillPortion(10))
                 .width(Length::Fill),
-            row![text!("Vol.").center()]
-                .align_y(Center)
+            column![text!("Vol.").center(), volume]
+                .align_x(Center)
                 .height(Length::FillPortion(30))
                 .width(Length::Fill),
-            row![text!("detune").center()]
-                .align_y(Center)
+            column![text!("Detune: {}", 0).center(), detune.align_x(Center)]
+                .align_x(Center)
                 .height(Length::FillPortion(30))
                 .width(Length::Fill),
-            row![text!("waveform type").center()]
-                .align_y(Center)
+            waveform
+                .align_x(Center)
                 .height(Length::FillPortion(30))
                 .width(Length::Fill),
         ]
@@ -134,7 +261,11 @@ impl SynthUI {
 
     fn overtones(&self) -> Column<'_, Message> {
         let overtones: Vec<Element<Message>> = (0..10)
-            .map(|i| column![text!("Overtones {}", i + 1).size(12).center()].into())
+            .map(|i| {
+                column![text!("Overtones {}", i + 1).size(12).center()]
+                    .width(Length::FillPortion(10))
+                    .into()
+            })
             .collect();
 
         column![
@@ -156,7 +287,7 @@ impl SynthUI {
     fn vu_meter(&self) -> Element<Message> {
         vertical_slider(
             0.0..=100.0,
-            self.synth.lock().unwrap().volume,
+            self.synth.lock().unwrap().volume * 100.0,
             Message::SetVolume,
         )
         .into()
@@ -167,7 +298,7 @@ impl Default for SynthUI {
     fn default() -> Self {
         let synth = {
             let synth = Synth::new();
-            println!("synth volume => {}", synth.volume);
+            // println!("synth volume => {}", synth.volume);
             Arc::new(Mutex::new(synth))
         };
 

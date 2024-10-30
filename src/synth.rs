@@ -4,7 +4,7 @@ use crate::{
     osc::{Oscillator, Overtone},
 };
 use midi_control::MidiNote;
-use std::{ops::Index, sync::Arc};
+use std::sync::Arc;
 
 pub type WaveTable = Arc<[f32]>;
 // pub type WaveTables = [(WaveTable, f32); 2];
@@ -142,7 +142,7 @@ impl WaveTables {
 pub struct Synth {
     pub osc_s: [Oscillator; VOICES],
     pub wave_tables: WaveTables,
-    pub osc_type: Arc<[(OscType, f32)]>,
+    pub osc_type: Vec<(OscType, f32)>,
     pub lfo: LFO,
     pub volume: f32,
     pub chorus: Chorus,
@@ -200,12 +200,14 @@ impl Synth {
         Self {
             osc_s: [Oscillator::new(); VOICES],
             wave_tables,
-            osc_type: Arc::new([
+            osc_type: vec![
                 // (OscType::Sin, 1.0),
+                (OscType::Saw, 1.0),
+                (OscType::Saw, 1.0),
                 (OscType::Saw, 1.0),
                 // (OscType::Tri, 0.75),
                 // (OscType::Sqr, 1.0),
-            ]),
+            ],
             // osc_type: Arc::new([(OscType::Tri, 1.0)]),
             lfo,
             volume: 0.75,
@@ -227,7 +229,7 @@ impl Synth {
             if osc.playing.is_some() {
                 osc.vibrato(lfo_sample);
                 // println!("playing");
-                sample += osc.get_sample(&self.wave_tables.index(&self.osc_type));
+                sample += osc.get_sample(&self.wave_tables.index(&self.osc_type.clone().into()));
                 // println!(
                 //     "env => {}, {}",
                 //     osc.env_filter.get_samnple(),
