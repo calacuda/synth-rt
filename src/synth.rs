@@ -20,6 +20,7 @@ pub enum OscType {
     Saw,
 }
 
+#[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub struct WaveTables {
     pub sin: WaveTable,
     pub tri: WaveTable,
