@@ -167,27 +167,6 @@ impl SynthUI {
         let handle = svg::Handle::from_memory(graph_svg);
 
         row![svg(handle).width(Length::Fill).height(Length::Fill)]
-
-        // let handle = svg::Handle::from_path(format!(
-        //     "{}/resources/tiger.svg",
-        //     env!("CARGO_MANIFEST_DIR")
-        // ));
-        //
-        // let svg = svg(handle).width(Length::Fill).height(Length::Fill);
-        // // .style(|_theme, _status| svg::Style {
-        // //     color: if self.apply_color_filter {
-        // //         Some(color!(0x0000ff))
-        // //     } else {
-        // //         None
-        // //     },
-        // // });
-        //
-        // // let apply_color_filter = checkbox("Apply a color filter", self.apply_color_filter)
-        // //     .on_toggle(Message::ToggleColorFilter);
-        //
-        // row![column![svg].spacing(20).height(Length::Fill)]
-        //     .padding(20)
-        //     .into()
     }
 
     fn reverb(&self) -> Column<'_, Message> {
