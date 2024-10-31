@@ -1,9 +1,5 @@
 use anyhow::{bail, Result};
-use iced::widget::shader::wgpu::core::device::UserClosures;
-use iced::widget::{
-    button, column, container, horizontal_space, radio, row, text, vertical_slider, vertical_space,
-    Button, Column,
-};
+use iced::widget::{button, column, radio, row, text, vertical_slider, vertical_space, Column};
 use iced::Alignment::Center;
 use iced::{Element, Length};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
@@ -24,6 +20,7 @@ use synth_rt::{synth::Synth, Player};
 pub struct SynthUI {
     synth: Arc<Mutex<Synth>>,
     _jhs: (JoinHandle<()>, JoinHandle<()>),
+    _stream: OutputStream,
 }
 
 #[derive(Debug, Clone)]
@@ -50,7 +47,7 @@ impl SynthUI {
         match message {
             Message::SetVolume(vol) => self.synth.lock().unwrap().set_volume(vol / 100.0),
             Message::OscVolume { osc_num, vol } => {
-                self.synth.lock().unwrap().osc_type[osc_num].1 = vol
+                self.synth.lock().unwrap().osc_type[osc_num].1 = vol / 100.0
             }
             Message::DetuneOscUp(osc_num) => {}
             Message::DetuneOscDown(osc_num) => {}
@@ -65,6 +62,7 @@ impl SynthUI {
     }
 
     fn view(&self) -> Element<Message> {
+        println!("view");
         column![
             row![text!("waveform view").center()]
                 .align_y(Center)
@@ -324,7 +322,11 @@ impl Default for SynthUI {
         });
         let _jhs = (jh_1, jh_2);
 
-        Self { synth, _jhs }
+        Self {
+            synth,
+            _jhs,
+            _stream,
+        }
     }
 }
 
@@ -373,11 +375,12 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
         if let Ok(midi_cmd) = decode_hex(&midi_cmd) {
             spawn(move || {
                 let message = MidiMessage::from(midi_cmd.as_ref());
+                // println!("midi message => {message:?}");
                 // do midi stuff
 
                 match message {
                     MidiMessage::Invalid => {
-                        println!("midi_cmd_buf => {midi_cmd:?}");
+                        // println!("midi_cmd_buf => {midi_cmd:?}");
                         println!("midi cmd => {:?}", MidiMessage::from(midi_cmd.as_ref()));
                         println!("midi_cmd -> {midi_cmd:?}");
                         println!("midi command invalid");

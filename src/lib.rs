@@ -22,7 +22,9 @@ impl Iterator for Player {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // println!("yet to lock");
         let sample = self.synth.lock().expect("couldn't lock synth").get_sample();
+        // println!("locked");
         Some(sample)
     }
 }
