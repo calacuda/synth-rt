@@ -1,7 +1,10 @@
 use anyhow::{bail, Result};
-use iced::widget::{button, column, radio, row, text, vertical_slider, vertical_space, Column};
+use iced::widget::{
+    button, center, column, container, radio, row, svg, text, vertical_slider, vertical_space,
+    Column, Row,
+};
 use iced::Alignment::Center;
-use iced::{Element, Length};
+use iced::{color, Element, Length};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
@@ -14,7 +17,7 @@ use std::{
     thread::{spawn, JoinHandle},
     time::Duration,
 };
-use synth_rt::synth::OscType;
+use synth_rt::synth::{OscType, WAVE_TABLE_SIZE};
 use synth_rt::{synth::Synth, Player};
 
 pub struct SynthUI {
@@ -35,15 +38,13 @@ enum Message {
 }
 
 impl SynthUI {
-    /**
-     * The title of the window. It will show up on the top of your application window.
-     */
+    /// The title of the window. It will show up on the top of your application window.
     fn title(&self) -> String {
         String::from("synth-rt")
     }
 
+    /// Updated the state of your app
     fn update(&mut self, message: Message) {
-        // Update the state of your app
         match message {
             Message::SetVolume(vol) => self.synth.lock().unwrap().set_volume(vol / 100.0),
             Message::OscVolume { osc_num, vol } => {
@@ -61,10 +62,12 @@ impl SynthUI {
         }
     }
 
+    /// make the layout fo the app based on the current state
     fn view(&self) -> Element<Message> {
-        println!("view");
+        // println!("view");
         column![
-            row![text!("waveform view").center()]
+            // row![text!("waveform view").center()]
+            self.waveform_vis()
                 .align_y(Center)
                 .height(Length::FillPortion(20))
                 .width(Length::Fill),
@@ -123,6 +126,68 @@ impl SynthUI {
         // .spacing(20)
         .align_x(Center)
         .into()
+    }
+
+    fn waveform_vis(&self) -> Row<'_, Message> {
+        let waveforms = self.synth.lock().unwrap().wave_tables.clone();
+        let weights = self.synth.lock().unwrap().osc_type.clone();
+
+        let mut waveform = [0.0; WAVE_TABLE_SIZE];
+
+        for (osc_type, weight) in weights {
+            let wf = match osc_type {
+                OscType::Sin => waveforms.sin.clone(),
+                OscType::Tri => waveforms.tri.clone(),
+                OscType::Sqr => waveforms.sqr.clone(),
+                OscType::Saw => waveforms.saw.clone(),
+            };
+
+            wf.iter()
+                .enumerate()
+                .for_each(|(i, sample)| waveform[i] += (sample * weight) / 3.0)
+        }
+
+        let waveform = waveform.into_iter().enumerate();
+
+        let mut graph = Vec::with_capacity(WAVE_TABLE_SIZE + 2);
+        graph.push(format!("<?xml version=\"1.0\" standalone=\"no\"?>\n<svg id=\"waveform-graph\"  height=\"100%\" width=\"100%\" viewBox=\"0 0 {} 50\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">", WAVE_TABLE_SIZE * 2));
+
+        for ((x1, s1), (x2, s2)) in waveform.clone().zip(waveform.skip(1)) {
+            let y1 = s1 * 25.0 + 25.0;
+            let y2 = s2 * 25.0 + 25.0;
+            let x1 = (x1 + 1) * 2;
+            let x2 = (x2 + 1) * 2;
+            graph.push(format!("<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x2}\" y2=\"{y2}\" style=\"stroke:blue;stroke-width:1\"/>"));
+        }
+
+        graph.push("</svg>".into());
+        // println!("{}", graph.join(" "));
+
+        let graph_svg = graph.join(" ").as_bytes().to_vec();
+        let handle = svg::Handle::from_memory(graph_svg);
+
+        row![svg(handle).width(Length::Fill).height(Length::Fill)]
+
+        // let handle = svg::Handle::from_path(format!(
+        //     "{}/resources/tiger.svg",
+        //     env!("CARGO_MANIFEST_DIR")
+        // ));
+        //
+        // let svg = svg(handle).width(Length::Fill).height(Length::Fill);
+        // // .style(|_theme, _status| svg::Style {
+        // //     color: if self.apply_color_filter {
+        // //         Some(color!(0x0000ff))
+        // //     } else {
+        // //         None
+        // //     },
+        // // });
+        //
+        // // let apply_color_filter = checkbox("Apply a color filter", self.apply_color_filter)
+        // //     .on_toggle(Message::ToggleColorFilter);
+        //
+        // row![column![svg].spacing(20).height(Length::Fill)]
+        //     .padding(20)
+        //     .into()
     }
 
     fn reverb(&self) -> Column<'_, Message> {
