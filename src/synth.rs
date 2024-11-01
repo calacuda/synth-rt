@@ -144,6 +144,7 @@ pub struct Synth {
     pub osc_s: [([Oscillator; VOICES], i16); 3],
     pub wave_tables: WaveTables,
     pub osc_type: [(OscType, f32); 3],
+    pub overtones: [Overtone; 10],
     pub lfo: LFO,
     pub volume: f32,
     pub chorus: Chorus,
@@ -166,31 +167,38 @@ impl Synth {
                 volume: 1.0,
             },
             Overtone {
-                overtone: 3.0,
-                volume: 1.0,
-            },
-            Overtone {
+                // overtone: 3.0,
                 overtone: 4.0,
                 volume: 1.0,
             },
             Overtone {
-                overtone: 5.0,
-                volume: 1.0,
-            },
-            Overtone {
+                // overtone: 4.0,
                 overtone: 6.0,
                 volume: 1.0,
             },
             Overtone {
+                // overtone: 5.0,
                 overtone: 8.0,
                 volume: 1.0,
             },
             Overtone {
-                overtone: 9.0,
+                // overtone: 6.0,
+                overtone: 10.0,
                 volume: 1.0,
             },
             Overtone {
-                overtone: 10.0,
+                // overtone: 8.0,
+                overtone: 12.0,
+                volume: 1.0,
+            },
+            Overtone {
+                // overtone: 9.0,
+                overtone: 14.0,
+                volume: 1.0,
+            },
+            Overtone {
+                // overtone: 10.0,
+                overtone: 16.0,
                 volume: 1.0,
             },
         ];
@@ -209,6 +217,7 @@ impl Synth {
                 // (OscType::Tri, 0.75),
                 // (OscType::Sqr, 1.0),
             ],
+            overtones,
             // osc_type: Arc::new([(OscType::Tri, 1.0)]),
             lfo,
             volume: 0.75,
@@ -216,8 +225,8 @@ impl Synth {
         }
     }
 
-    pub fn set_overtones(&mut self, overtones: &[Overtone]) {
-        self.wave_tables = WaveTables::new(overtones);
+    pub fn set_overtones(&mut self) {
+        self.wave_tables = WaveTables::new(&self.overtones);
     }
 
     pub fn get_sample(&mut self) -> f32 {
@@ -245,7 +254,7 @@ impl Synth {
         }
 
         let sample = sample * (self.volume + lfo_sample * 0.0125);
-        sample + self.chorus.get_sample(sample)
+        (sample + self.chorus.get_sample(sample)).tanh()
         // println!("synth sample => {sample}");
         // sample * self.volume
     }

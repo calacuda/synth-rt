@@ -3,7 +3,7 @@ use iced::widget::{
     button, column, radio, row, svg, text, vertical_slider, vertical_space, Column, Row,
 };
 use iced::Alignment::Center;
-use iced::{Element, Length};
+use iced::{Element, Length, Padding};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
@@ -21,7 +21,7 @@ use synth_rt::{synth::Synth, Player};
 
 pub struct SynthUI {
     synth: Arc<Mutex<Synth>>,
-    _jhs: (JoinHandle<()>, JoinHandle<()>),
+    jhs: (JoinHandle<()>, JoinHandle<()>),
     _stream: OutputStream,
 }
 
@@ -34,6 +34,10 @@ enum Message {
     OscTypeUpdate { osc_num: usize, osc_type: OscType },
     ChorusVolume(f32),
     ChorusSpeed(f32),
+    ConnectToSerial,
+    ReverbGain(f32),
+    ReverbDecay(f32),
+    OvertoneVolume { overtone: usize, vol: f64 },
 }
 
 impl SynthUI {
@@ -66,11 +70,41 @@ impl SynthUI {
             Message::ChorusSpeed(speed) => {
                 self.synth.lock().unwrap().chorus.set_speed(speed / 100.0)
             }
+            Message::ConnectToSerial => {
+                let s = self.synth.clone();
+                self.jhs.1 = spawn(move || con_to_serial(s))
+            }
+            Message::ReverbGain(_) | Message::ReverbDecay(_) => {
+                println!("[ERROR] Reverb is not yet implemented")
+            }
+            Message::OvertoneVolume { overtone, vol } => {
+                self.synth.lock().unwrap().overtones[overtone].volume = vol / 100.0;
+                self.synth.lock().unwrap().set_overtones();
+            }
         }
     }
 
-    /// make the layout fo the app based on the current state
     fn view(&self) -> Element<Message> {
+        if !self.jhs.1.is_finished() {
+            self.synth_view()
+        } else {
+            self.con_serial_view()
+        }
+    }
+
+    fn con_serial_view(&self) -> Element<Message> {
+        let con_button = button("Connect").on_press(Message::ConnectToSerial);
+
+        column![text!["no serial MIDI connection found. Please connect the arduino and click the button bellow."].size(24), con_button]
+            .height(Length::Fill)
+            .width(Length::Fill)
+            // .spacing(20)
+            .align_x(Center)
+            .into()
+    }
+
+    /// the main layout for the app when serial is connected
+    fn synth_view(&self) -> Element<Message> {
         // println!("view");
         column![
             // row![text!("waveform view").center()]
@@ -177,24 +211,35 @@ impl SynthUI {
     }
 
     fn reverb(&self) -> Column<'_, Message> {
-        // let decay = vertical_slider(
-        //     0.0..=100.0,
-        //     self.synth.lock().unwrap().reverb.decay * 100.0,
-        //     Message::ChorusVolume,
-        // );
-        //
-        // let gain = vertical_slider(
-        //     0.0..=100.0,
-        //     self.synth.lock().unwrap().reverb.gain * 100.0,
-        //     Message::ChorusSpeed,
-        // );
+        let decay = vertical_slider(
+            0.0..=100.0,
+            0.0, // self.synth.lock().unwrap().reverb.decay * 100.0,
+            Message::ReverbDecay,
+        );
+
+        let gain = vertical_slider(
+            0.0..=100.0,
+            0.0, // self.synth.lock().unwrap().reverb.gain * 100.0,
+            Message::ReverbGain,
+        );
 
         column![
             text!["Reverb"].size(24),
-            text!["Decay"],
-            // decay,
-            text!["Gain"],
-            // gain
+            row![
+                column![text!["Decay"], decay,]
+                    .align_x(Center)
+                    .height(Length::Fill)
+                    .width(Length::Fill),
+                column![text!["Gain"], gain]
+                    // .padding([24, 0])
+                    .align_x(Center)
+                    .height(Length::Fill)
+                    .width(Length::Fill),
+            ]
+            .padding(Padding {
+                bottom: 24.0,
+                ..Default::default()
+            })
         ]
         .align_x(Center)
         .height(Length::FillPortion(50))
@@ -322,15 +367,24 @@ impl SynthUI {
     fn overtones(&self) -> Column<'_, Message> {
         let overtones: Vec<Element<Message>> = (0..10)
             .map(|i| {
-                column![text!("Overtones {}", i + 1).size(12).center()]
+                let slider = vertical_slider(
+                    0.0..=100.0,
+                    self.synth.lock().unwrap().overtones[i].volume * 100.0,
+                    move |vol| Message::OvertoneVolume { overtone: i, vol },
+                );
+                column![text!("{}", i + 1).center(), slider]
+                    .padding([24, 0])
                     .width(Length::FillPortion(10))
                     .into()
             })
             .collect();
 
         column![
-            row![text!("Overtones").size(24).center()]
+            text!("Overtones")
+                .size(24)
+                .center()
                 .align_y(Center)
+                .align_x(Center)
                 .height(Length::FillPortion(10))
                 .width(Length::Fill),
             row(overtones)
@@ -376,17 +430,12 @@ impl Default for SynthUI {
         });
 
         let s = synth.clone();
-        let jh_2 = spawn(move || {
-            if let Err(e) = run_midi(s) {
-                println!("[ERROR] => Serial MIDI input error: {e}");
-                exit(1);
-            }
-        });
-        let _jhs = (jh_1, jh_2);
+        let jh_2 = spawn(move || con_to_serial(s));
+        let jhs = (jh_1, jh_2);
 
         Self {
             synth,
-            _jhs,
+            jhs,
             _stream,
         }
     }
@@ -396,6 +445,13 @@ fn main() -> iced::Result {
     iced::application(SynthUI::title, SynthUI::update, SynthUI::view)
         .centered()
         .run()
+}
+
+fn con_to_serial(s: Arc<Mutex<Synth>>) {
+    if let Err(e) = run_midi(s) {
+        println!("[ERROR] => Serial MIDI input error: {e}");
+        // exit(1);
+    }
 }
 
 pub fn decode_hex(s: &str) -> Result<Vec<u8>> {
