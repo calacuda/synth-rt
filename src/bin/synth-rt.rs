@@ -216,10 +216,19 @@ impl SynthUI {
 
         column![
             text!["Chorus"].size(24),
-            text!["Vol."],
-            volume,
-            text!["Speed"],
-            speed
+            row![
+                column![text!["Vol."], volume]
+                    .align_x(Center)
+                    .height(Length::Fill)
+                    .width(Length::Fill),
+                column![text!["Speed"], speed]
+                    .align_x(Center)
+                    .height(Length::Fill)
+                    .width(Length::Fill)
+            ]
+            .align_y(Center)
+            .height(Length::Fill)
+            .width(Length::Fill) // .into()
         ]
         .align_x(Center)
         .height(Length::FillPortion(50))
@@ -236,6 +245,8 @@ impl SynthUI {
             },
         );
 
+        let detune_amt = self.synth.lock().unwrap().osc_s[osc_i].1;
+
         let detune = column![
             // detune up
             button("Up")
@@ -243,8 +254,8 @@ impl SynthUI {
                 .on_press(Message::DetuneOscUp(osc_i)),
             vertical_space(),
             // detune amt
-            // text!("Detune: {}", 0),
-            vertical_space(),
+            text!("{}", detune_amt),
+            // vertical_space(),
             // detune down
             button("Dwn")
                 // .padding([12, 24])
@@ -282,8 +293,6 @@ impl SynthUI {
             },),
         ];
 
-        let detune_amt = self.synth.lock().unwrap().osc_s[osc_i].1;
-
         column![
             text!("Osc {}", osc_i + 1)
                 .size(24)
@@ -295,13 +304,10 @@ impl SynthUI {
                 .align_x(Center)
                 .height(Length::FillPortion(30))
                 .width(Length::Fill),
-            column![
-                text!("Detune: {}", detune_amt).center(),
-                detune.align_x(Center)
-            ]
-            .align_x(Center)
-            .height(Length::FillPortion(30))
-            .width(Length::Fill),
+            column![text!("Detune").center(), detune.align_x(Center)]
+                .align_x(Center)
+                .height(Length::FillPortion(30))
+                .width(Length::Fill),
             waveform
                 .align_x(Center)
                 .height(Length::FillPortion(30))
