@@ -7,6 +7,7 @@ use iced::{Element, Length, Padding};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
+use std::thread::sleep;
 use std::{
     i16,
     io::{BufRead, BufReader},
@@ -72,7 +73,8 @@ impl SynthUI {
             }
             Message::ConnectToSerial => {
                 let s = self.synth.clone();
-                self.jhs.1 = spawn(move || con_to_serial(s))
+                self.jhs.1 = spawn(move || con_to_serial(s));
+                sleep(Duration::from_secs_f64(0.5))
             }
             Message::ReverbGain(_) | Message::ReverbDecay(_) => {
                 println!("[ERROR] Reverb is not yet implemented")
@@ -484,7 +486,7 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
 
         if let Err(e) = reader.read_line(&mut midi_cmd) {
             println!("{e}");
-            continue;
+            bail!("{e}")
         }
 
         // parse into midi command
