@@ -2,8 +2,9 @@ use anyhow::{bail, Result};
 use iced::widget::{
     button, column, radio, row, svg, text, vertical_slider, vertical_space, Column, Row,
 };
+use iced::window::{self, change_mode, events, Id};
 use iced::Alignment::Center;
-use iced::{Element, Length, Padding};
+use iced::{Element, Length, Padding, Subscription, Task, Theme};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
@@ -39,6 +40,7 @@ enum Message {
     ReverbGain(f32),
     ReverbDecay(f32),
     OvertoneVolume { overtone: usize, vol: f64 },
+    WindowEvent(Id),
 }
 
 impl SynthUI {
@@ -48,7 +50,7 @@ impl SynthUI {
     }
 
     /// Updated the state of your app
-    fn update(&mut self, message: Message) {
+    fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::SetVolume(vol) => self.synth.lock().unwrap().set_volume(vol / 100.0),
             Message::OscVolume { osc_num, vol } => {
@@ -83,7 +85,10 @@ impl SynthUI {
                 self.synth.lock().unwrap().overtones[overtone].volume = vol / 100.0;
                 self.synth.lock().unwrap().set_overtones();
             }
+            Message::WindowEvent(id) => return change_mode(id, window::Mode::Fullscreen),
         }
+
+        Task::none()
     }
 
     fn view(&self) -> Element<Message> {
@@ -408,6 +413,17 @@ impl SynthUI {
         )
         .into()
     }
+
+    fn subscription(&self) -> Subscription<Message> {
+        events().map(|(id, _event)| {
+            // println!("{id} is now Fullscreen");
+            // change_mode(id, window::Mode::Fullscreen);
+            // let fun = |_|
+            Message::WindowEvent(id)
+
+            // fun
+        })
+    }
 }
 
 impl Default for SynthUI {
@@ -445,8 +461,11 @@ impl Default for SynthUI {
 
 fn main() -> iced::Result {
     iced::application(SynthUI::title, SynthUI::update, SynthUI::view)
+        .theme(|_| Theme::CatppuccinMocha)
+        .subscription(SynthUI::subscription)
         .centered()
         .run()
+    // .and_then(|_| )
 }
 
 fn con_to_serial(s: Arc<Mutex<Synth>>) {
