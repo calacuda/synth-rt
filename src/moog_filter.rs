@@ -35,7 +35,7 @@ impl HuovilainenMoog {
             sample_rate: SAMPLE_RATE as f32,
         };
 
-        // filter.compute_coeffs(5_000.0, 0.75);
+        filter.compute_coeffs(5_000.0, 0.75);
 
         filter
     }

@@ -141,9 +141,9 @@ impl WaveTables {
 }
 
 pub struct Synth {
-    pub osc_s: [Oscillator; VOICES],
+    pub osc_s: [([Oscillator; VOICES], i16); 3],
     pub wave_tables: WaveTables,
-    pub osc_type: Vec<(OscType, f32)>,
+    pub osc_type: [(OscType, f32); 3],
     pub lfo: LFO,
     pub volume: f32,
     pub chorus: Chorus,
@@ -199,9 +199,9 @@ impl Synth {
         lfo.set_frequency(400.0 / 60.0);
 
         Self {
-            osc_s: [Oscillator::new(); VOICES],
+            osc_s: [([Oscillator::new(); VOICES], 0); 3],
             wave_tables,
-            osc_type: vec![
+            osc_type: [
                 // (OscType::Sin, 1.0),
                 (OscType::Saw, 1.0),
                 (OscType::Saw, 1.0),
@@ -225,17 +225,22 @@ impl Synth {
         let lfo_sample = self.lfo.get_sample();
         // println!("lfo sample {lfo_sample}");
 
-        for osc in self.osc_s.iter_mut() {
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
             // println!("{osc:?}");
-            if osc.playing.is_some() {
-                osc.vibrato(lfo_sample);
-                // println!("playing");
-                sample += osc.get_sample(&self.wave_tables.index(&self.osc_type.clone().into()));
-                // println!(
-                //     "env => {}, {}",
-                //     osc.env_filter.get_samnple(),
-                //     osc.env_filter.phase
-                // );
+            for osc in osc_s {
+                if osc.playing.is_some() {
+                    // osc.for_each(|(osc, _offset)| {
+                    osc.vibrato(lfo_sample);
+                    // println!("playing");
+                    sample +=
+                        osc.get_sample(&self.wave_tables.index(&self.osc_type.clone().into()));
+                    // println!(
+                    //     "env => {}, {}",
+                    //     osc.env_filter.get_samnple(),
+                    //     osc.env_filter.phase
+                    // );
+                    // });
+                }
             }
         }
 
@@ -245,25 +250,35 @@ impl Synth {
         // sample * self.volume
     }
 
-    pub fn play(&mut self, midi_note: MidiNote, velocity: u8) {
+    pub fn play(&mut self, midi_note: MidiNote, _velocity: u8) {
         let midi_note = if midi_note >= 12 {
             midi_note - 12
         } else {
             return;
         };
 
-        for osc in self.osc_s.iter_mut() {
-            if osc.playing == Some(midi_note) {
-                return;
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                if osc.playing == Some(midi_note) {
+                    return;
+                }
             }
         }
 
-        for osc in self.osc_s.iter_mut() {
-            if osc.playing.is_none() {
-                osc.press(midi_note);
-                // println!("playing note on osc {i}");
+        for (osc_s, offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                if osc.playing.is_none() {
+                    let note = if *offset > 0 {
+                        midi_note + (*offset as u8)
+                    } else {
+                        // println!("offset {} -> {}", offset, (offset.abs() as u8));
+                        midi_note - (offset.abs() as u8)
+                    };
+                    osc.press(note);
+                    // println!("playing note on osc {i}");
 
-                break;
+                    break;
+                }
             }
         }
     }
@@ -275,27 +290,40 @@ impl Synth {
             return;
         };
 
-        for osc in self.osc_s.iter_mut() {
-            if osc.playing == Some(midi_note) {
-                // println!("release");
-                osc.release();
-                break;
+        for (osc_s, offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                let note = if *offset > 0 {
+                    midi_note + (*offset as u8)
+                } else {
+                    // println!("offset {} -> {}", offset, (offset.abs() as u8));
+                    midi_note - (offset.abs() as u8)
+                };
+
+                if osc.playing == Some(note) {
+                    // println!("release");
+                    osc.release();
+                    break;
+                }
             }
         }
     }
 
     pub fn bend_all(&mut self, bend: f32) {
-        for osc in self.osc_s.iter_mut() {
-            if osc.playing.is_some() {
-                osc.bend(bend);
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                if osc.playing.is_some() {
+                    osc.bend(bend);
+                }
             }
         }
     }
 
     pub fn unbend(&mut self) {
-        for osc in self.osc_s.iter_mut() {
-            if osc.playing.is_some() {
-                osc.unbend();
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                if osc.playing.is_some() {
+                    osc.unbend();
+                }
             }
         }
     }
@@ -305,20 +333,26 @@ impl Synth {
     }
 
     pub fn set_atk(&mut self, atk: f32) {
-        for osc in self.osc_s.iter_mut() {
-            osc.env_filter.set_atk(atk);
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                osc.env_filter.set_atk(atk);
+            }
         }
     }
 
     pub fn set_decay(&mut self, decay: f32) {
-        for osc in self.osc_s.iter_mut() {
-            osc.env_filter.set_decay(decay);
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                osc.env_filter.set_decay(decay);
+            }
         }
     }
 
     pub fn set_sus(&mut self, sus: f32) {
-        for osc in self.osc_s.iter_mut() {
-            osc.env_filter.set_sus(sus);
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                osc.env_filter.set_sus(sus);
+            }
         }
     }
 
@@ -331,14 +365,18 @@ impl Synth {
     pub fn set_cutoff(&mut self, cutoff: f32) {
         let cutoff = cutoff * 10_000.0;
 
-        for osc in self.osc_s.iter_mut() {
-            osc.low_pass.set_cutoff(cutoff);
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                osc.low_pass.set_cutoff(cutoff);
+            }
         }
     }
 
     pub fn set_resonace(&mut self, resonace: f32) {
-        for osc in self.osc_s.iter_mut() {
-            osc.low_pass.set_resonace(resonace);
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                osc.low_pass.set_resonace(resonace);
+            }
         }
     }
 

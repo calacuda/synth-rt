@@ -1,10 +1,9 @@
 use anyhow::{bail, Result};
 use iced::widget::{
-    button, center, column, container, radio, row, svg, text, vertical_slider, vertical_space,
-    Column, Row,
+    button, column, radio, row, svg, text, vertical_slider, vertical_space, Column, Row,
 };
 use iced::Alignment::Center;
-use iced::{color, Element, Length};
+use iced::{Element, Length};
 use midi_control::{ControlEvent, KeyEvent, MidiMessage};
 use rodio::OutputStream;
 use serialport;
@@ -50,8 +49,16 @@ impl SynthUI {
             Message::OscVolume { osc_num, vol } => {
                 self.synth.lock().unwrap().osc_type[osc_num].1 = vol / 100.0
             }
-            Message::DetuneOscUp(osc_num) => {}
-            Message::DetuneOscDown(osc_num) => {}
+            Message::DetuneOscUp(osc_num) => {
+                if self.synth.lock().unwrap().osc_s[osc_num].1 < 12 {
+                    self.synth.lock().unwrap().osc_s[osc_num].1 += 1
+                }
+            }
+            Message::DetuneOscDown(osc_num) => {
+                if self.synth.lock().unwrap().osc_s[osc_num].1 > -12 {
+                    self.synth.lock().unwrap().osc_s[osc_num].1 -= 1
+                }
+            }
             Message::OscTypeUpdate { osc_num, osc_type } => {
                 self.synth.lock().unwrap().osc_type[osc_num].0 = osc_type
             }
@@ -69,21 +76,21 @@ impl SynthUI {
             // row![text!("waveform view").center()]
             self.waveform_vis()
                 .align_y(Center)
-                .height(Length::FillPortion(20))
+                .height(Length::FillPortion(40))
                 .width(Length::Fill),
-            row![
-                column![text!("ADSR view").center()]
-                    .align_x(Center)
-                    .height(Length::Fill)
-                    .width(Length::FillPortion(1)),
-                column![text!("Low Pass view").center()]
-                    .align_x(Center)
-                    .height(Length::Fill)
-                    .width(Length::FillPortion(1))
-            ]
-            .align_y(Center)
-            .height(20)
-            .width(Length::Fill),
+            // row![
+            //     column![text!("ADSR view").center()]
+            //         .align_x(Center)
+            //         .height(Length::Fill)
+            //         .width(Length::FillPortion(1)),
+            //     column![text!("Low Pass view").center()]
+            //         .align_x(Center)
+            //         .height(Length::Fill)
+            //         .width(Length::FillPortion(1))
+            // ]
+            // .align_y(Center)
+            // .height(20)
+            // .width(Length::Fill),
             row![
                 self.osc(0)
                     .align_x(Center)
@@ -275,6 +282,8 @@ impl SynthUI {
             },),
         ];
 
+        let detune_amt = self.synth.lock().unwrap().osc_s[osc_i].1;
+
         column![
             text!("Osc {}", osc_i + 1)
                 .size(24)
@@ -286,10 +295,13 @@ impl SynthUI {
                 .align_x(Center)
                 .height(Length::FillPortion(30))
                 .width(Length::Fill),
-            column![text!("Detune: {}", 0).center(), detune.align_x(Center)]
-                .align_x(Center)
-                .height(Length::FillPortion(30))
-                .width(Length::Fill),
+            column![
+                text!("Detune: {}", detune_amt).center(),
+                detune.align_x(Center)
+            ]
+            .align_x(Center)
+            .height(Length::FillPortion(30))
+            .width(Length::Fill),
             waveform
                 .align_x(Center)
                 .height(Length::FillPortion(30))
@@ -448,10 +460,11 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
                         let value = value as f32 / 127.0;
 
                         match control {
-                            70 => synth.lock().unwrap().set_volume(value),
-                            71 => synth.lock().unwrap().set_atk(value),
-                            72 => synth.lock().unwrap().set_decay(value),
-                            73 => synth.lock().unwrap().set_sus(value),
+                            // 70 => synth.lock().unwrap().set_volume(value),
+                            70 => synth.lock().unwrap().set_atk(value),
+                            71 => synth.lock().unwrap().set_decay(value),
+                            72 => synth.lock().unwrap().set_sus(value),
+                            // 73 => synth.lock().unwrap().set_release(value),
                             74 => synth.lock().unwrap().set_cutoff(value),
                             75 => synth.lock().unwrap().set_resonace(value),
                             76 => synth.lock().unwrap().set_chorus_depth(value),
