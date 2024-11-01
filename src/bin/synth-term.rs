@@ -51,10 +51,9 @@ fn run_midi(synth: Arc<Mutex<Synth>>) -> Result<()> {
         bail!("no serial ports found");
     };
 
-    let mut serial_port =
-        serialport::new(format!("{}", port.as_os_str().to_string_lossy()), 32_500)
-            .timeout(Duration::from_millis(u64::MAX))
-            .open()?;
+    let serial_port = serialport::new(format!("{}", port.as_os_str().to_string_lossy()), 32_500)
+        .timeout(Duration::from_millis(u64::MAX))
+        .open()?;
 
     let mut reader = BufReader::new(serial_port);
 

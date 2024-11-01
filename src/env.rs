@@ -76,6 +76,13 @@ impl ADSR {
             Self::calc_release(self.base_params[RELEASE], self.base_params[SUSTAIN]);
     }
 
+    pub fn set_release(&mut self, release: f32) {
+        let release = release * 0.25;
+
+        self.base_params[RELEASE] = release;
+        self.tweek_env_by[RELEASE] = Self::calc_release(release, self.base_params[SUSTAIN]);
+    }
+
     /// used to generate an env sample
     pub fn get_samnple(&mut self) -> f32 {
         self.env += self.tweek_env_by[self.phase];

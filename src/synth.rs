@@ -356,11 +356,13 @@ impl Synth {
         }
     }
 
-    // pub fn set_release(&mut self, atk: f32) {
-    //     for osc in self.osc_s.iter_mut() {
-    //         osc.env_filter.set_re(atk);
-    //     }
-    // }
+    pub fn set_release(&mut self, release: f32) {
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
+            for osc in osc_s {
+                osc.env_filter.set_release(release);
+            }
+        }
+    }
 
     pub fn set_cutoff(&mut self, cutoff: f32) {
         let cutoff = cutoff * 10_000.0;
