@@ -82,11 +82,11 @@ impl SynthUI {
             }
             Message::ReverbGain(gain) => {
                 // println!("[ERROR] Reverb is not yet implemented")
-                self.synth.lock().unwrap().reverb.set_gain(gain);
+                self.synth.lock().unwrap().reverb.set_gain(gain * 0.01);
             }
             Message::ReverbDecay(decay) => {
                 // println!("[ERROR] Reverb is not yet implemented")
-                self.synth.lock().unwrap().reverb.set_decay(decay);
+                self.synth.lock().unwrap().reverb.set_decay(decay * 0.01);
             }
             Message::OvertoneVolume { overtone, vol } => {
                 self.synth.lock().unwrap().overtones[overtone].volume = vol / 100.0;
