@@ -156,51 +156,51 @@ impl Synth {
     pub fn new() -> Self {
         let overtones = [
             Overtone {
-                overtone: 1.0_f64.powf(1.0 / 12.0),
+                overtone: 0.5_f64.powf(1.0 / 12.0),
                 volume: 1.0,
             },
             Overtone {
                 // overtone: 2.0_f64.powf(1.0 / 12.0),
-                overtone: 2.5_f64.powf(1.0 / 12.0),
+                overtone: 1.5_f64.powf(1.0 / 12.0),
                 volume: 1.0,
             },
             Overtone {
-                overtone: 2.0,
+                overtone: 1.0,
                 volume: 1.0,
             },
             Overtone {
-                // overtone: 3.0,
-                overtone: 4.0,
-                volume: 1.0,
-            },
-            Overtone {
+                overtone: 3.0,
                 // overtone: 4.0,
-                overtone: 6.0,
                 volume: 1.0,
             },
             Overtone {
-                // overtone: 5.0,
-                overtone: 8.0,
-                volume: 1.0,
-            },
-            Overtone {
-                // overtone: 6.0,
-                overtone: 10.0,
-                volume: 1.0,
-            },
-            Overtone {
+                overtone: 4.0,
                 // overtone: 8.0,
-                overtone: 12.0,
                 volume: 1.0,
             },
             Overtone {
-                // overtone: 9.0,
-                overtone: 14.0,
+                overtone: 5.0,
+                // overtone: 16.0,
                 volume: 1.0,
             },
             Overtone {
-                // overtone: 10.0,
-                overtone: 16.0,
+                overtone: 6.0,
+                // overtone: 32.0,
+                volume: 1.0,
+            },
+            Overtone {
+                overtone: 8.0,
+                // overtone: 64.0,
+                volume: 1.0,
+            },
+            Overtone {
+                overtone: 9.0,
+                // overtone: 128.0,
+                volume: 1.0,
+            },
+            Overtone {
+                overtone: 10.0,
+                // overtone: 256.0,
                 volume: 1.0,
             },
         ];
@@ -263,11 +263,11 @@ impl Synth {
     }
 
     pub fn play(&mut self, midi_note: MidiNote, _velocity: u8) {
-        let midi_note = if midi_note >= 12 {
-            midi_note - 12
-        } else {
-            return;
-        };
+        // let midi_note = if midi_note >= 12 {
+        //     midi_note - 12
+        // } else {
+        //     return;
+        // };
 
         for (osc_s, _offset) in self.osc_s.iter_mut() {
             for osc in osc_s {
@@ -287,6 +287,7 @@ impl Synth {
                         midi_note - (offset.abs() as u8)
                     };
                     osc.press(note);
+                    osc.playing = Some(midi_note);
                     // println!("playing note on osc {i}");
 
                     break;
@@ -296,22 +297,22 @@ impl Synth {
     }
 
     pub fn stop(&mut self, midi_note: MidiNote) {
-        let midi_note = if midi_note >= 12 {
-            midi_note - 12
-        } else {
-            return;
-        };
+        // let midi_note = if midi_note >= 12 {
+        //     midi_note - 12
+        // } else {
+        //     return;
+        // };
 
-        for (osc_s, offset) in self.osc_s.iter_mut() {
+        for (osc_s, _offset) in self.osc_s.iter_mut() {
             for osc in osc_s {
-                let note = if *offset > 0 {
-                    midi_note + (*offset as u8)
-                } else {
-                    // println!("offset {} -> {}", offset, (offset.abs() as u8));
-                    midi_note - (offset.abs() as u8)
-                };
+                // let note = if *offset > 0 {
+                //     midi_note + (*offset as u8)
+                // } else {
+                //     // println!("offset {} -> {}", offset, (offset.abs() as u8));
+                //     midi_note - (offset.abs() as u8)
+                // };
 
-                if osc.playing == Some(note) {
+                if osc.playing == Some(midi_note) {
                     // println!("release");
                     osc.release();
                     break;

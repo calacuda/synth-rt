@@ -126,7 +126,7 @@ impl SynthUI {
             // row![text!("waveform view").center()]
             self.waveform_vis()
                 .align_y(Center)
-                .height(Length::FillPortion(40))
+                .height(Length::FillPortion(30))
                 .width(Length::Fill),
             // row![
             //     column![text!("ADSR view").center()]
@@ -168,14 +168,21 @@ impl SynthUI {
                 .align_x(Center)
                 .height(Length::Fill)
                 .width(Length::FillPortion(150)),
-                column![self.vu_meter()]
-                    .padding([24, 0])
-                    .align_x(Center)
-                    .height(Length::Fill)
-                    .width(Length::FillPortion(150))
+                column![
+                    text!["Vol."].size(24).align_x(Center).width(Length::Fill),
+                    self.vu_meter()
+                ]
+                // .padding([24, 0])
+                .align_x(Center)
+                .height(Length::Fill)
+                .width(Length::FillPortion(150))
             ]
             .align_y(Center)
-            .height(Length::FillPortion(60))
+            .padding(Padding {
+                bottom: 24.0,
+                ..Default::default()
+            })
+            .height(Length::FillPortion(70))
             .width(Length::Fill),
         ]
         .height(Length::Fill)
@@ -214,7 +221,7 @@ impl SynthUI {
             let y2 = s2 * 25.0 + 25.0;
             let x1 = (x1 + 1) * 2;
             let x2 = (x2 + 1) * 2;
-            graph.push(format!("<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x2}\" y2=\"{y2}\" style=\"stroke:blue;stroke-width:1\"/>"));
+            graph.push(format!("<line x1=\"{x1}\" y1=\"{y1}\" x2=\"{x2}\" y2=\"{y2}\" style=\"stroke:#a6e3a1;stroke-width:1\"/>"));
         }
 
         graph.push("</svg>".into());
@@ -259,11 +266,10 @@ impl SynthUI {
                     .align_x(Center)
                     .height(Length::Fill)
                     .width(Length::Fill),
-            ]
-            .padding(Padding {
-                bottom: 24.0,
-                ..Default::default()
-            })
+            ] // .padding(Padding {
+              //     bottom: 24.0,
+              //     ..Default::default()
+              // })
         ]
         .align_x(Center)
         .height(Length::FillPortion(50))
@@ -405,7 +411,7 @@ impl SynthUI {
                     move |vol| Message::OvertoneVolume { overtone: i, vol },
                 );
                 column![text!("{}", i + 1).center(), slider]
-                    .padding([24, 0])
+                    // .padding([24, 0])
                     .width(Length::FillPortion(10))
                     .into()
             })
