@@ -167,7 +167,7 @@ impl SynthUI {
                 ]
                 .align_x(Center)
                 .height(Length::Fill)
-                .width(Length::FillPortion(150)),
+                .width(Length::FillPortion(200)),
                 column![
                     text!["Vol."].size(24).align_x(Center).width(Length::Fill),
                     self.vu_meter()
@@ -175,7 +175,7 @@ impl SynthUI {
                 // .padding([24, 0])
                 .align_x(Center)
                 .height(Length::Fill)
-                .width(Length::FillPortion(150))
+                .width(Length::FillPortion(100))
             ]
             .align_y(Center)
             .padding(Padding {
