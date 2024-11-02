@@ -7,6 +7,7 @@ pub struct Chorus {
     pub step: usize,
     pub volume: f32,
     pub speed: f32,
+    pub power: bool,
 }
 
 impl Chorus {
@@ -18,20 +19,25 @@ impl Chorus {
             step: 1,
             volume: 0.75,
             speed: 0.0,
+            power: true,
         }
     }
 
     pub fn get_sample(&mut self, input_sample: f32) -> f32 {
-        let chorus = ((self.buff[self.i] * self.volume) + input_sample).tanh();
-        // self.buff[self.i ] = echo;
-        self.buff[(self.i + self.step) % self.size] = chorus;
-        // self.buff[self.i] = 0.0;
-        // self.buff[(self.i as i64 - self.step as i64).abs() as usize % self.size] = echo;
-        self.i = (self.i + 1) % self.size;
-        // if echo == input_sample && input_sample != 0.0 {
-        //     error!("[error] {}", self.i);
-        // }
-        chorus
+        if self.power {
+            let chorus = ((self.buff[self.i] * self.volume) + input_sample).tanh();
+            // self.buff[self.i ] = echo;
+            self.buff[(self.i + self.step) % self.size] = chorus;
+            // self.buff[self.i] = 0.0;
+            // self.buff[(self.i as i64 - self.step as i64).abs() as usize % self.size] = echo;
+            self.i = (self.i + 1) % self.size;
+            // if echo == input_sample && input_sample != 0.0 {
+            //     error!("[error] {}", self.i);
+            // }
+            chorus
+        } else {
+            input_sample
+        }
     }
 
     /// sets speed, takes speed in seconds
@@ -45,33 +51,12 @@ impl Chorus {
     pub fn set_volume(&mut self, volume: f32) {
         self.volume = volume;
     }
-}
 
-// pub struct Chorus {
-//     buff: Buff,
-// }
-//
-// impl Chorus {
-//     pub fn new() -> Self {
-//         const BUFF_SIZE: usize = SAMPLE_RATE as usize;
-//
-//         let mut buff = Buff {
-//             size: BUFF_SIZE,
-//             buff: [0.0; BUFF_SIZE],
-//             i: 0,
-//             step: 0,
-//             volume: 0.75,
-//         };
-//         let audio_in = 0.0;
-//
-//         // buff.set_speed(0.0);
-//         buff.set_speed(0.075);
-//
-//         Self { buff }
-//     }
-//
-//     fn get_samples(&mut self, sample: f32) -> Vec<(u8, f32)> {
-//         // info!("chorus");
-//         vec![(0, self.buff.get_sample(sample))]
-//     }
-// }
+    pub fn turn_power_on(&mut self, power: bool) {
+        self.power = power;
+    }
+
+    pub fn power_toggle(&mut self) {
+        self.power = !self.power;
+    }
+}

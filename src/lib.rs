@@ -10,6 +10,7 @@ pub mod env;
 pub mod lfo;
 pub mod moog_filter;
 pub mod osc;
+pub mod reverb;
 pub mod synth;
 
 pub const SAMPLE_RATE: u32 = 48_000;

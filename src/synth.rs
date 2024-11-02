@@ -2,6 +2,7 @@ use crate::{
     chorus::Chorus,
     lfo::LFO,
     osc::{Oscillator, Overtone},
+    reverb::Reverb,
 };
 use midi_control::MidiNote;
 use std::sync::Arc;
@@ -148,6 +149,7 @@ pub struct Synth {
     pub lfo: LFO,
     pub volume: f32,
     pub chorus: Chorus,
+    pub reverb: Reverb,
 }
 
 impl Synth {
@@ -222,6 +224,7 @@ impl Synth {
             lfo,
             volume: 0.75,
             chorus: Chorus::new(),
+            reverb: Reverb::new(),
         }
     }
 
@@ -254,7 +257,7 @@ impl Synth {
         }
 
         let sample = sample * (self.volume + lfo_sample * 0.0125);
-        (sample + self.chorus.get_sample(sample)).tanh()
+        ((sample + self.chorus.get_sample(sample) + self.reverb.get_sample(sample)) / 3.0).tanh()
         // println!("synth sample => {sample}");
         // sample * self.volume
     }

@@ -41,6 +41,8 @@ enum Message {
     ReverbDecay(f32),
     OvertoneVolume { overtone: usize, vol: f64 },
     WindowEvent(Id),
+    ChorusPowerTogle,
+    ReverbPowerTogle,
 }
 
 impl SynthUI {
@@ -78,14 +80,21 @@ impl SynthUI {
                 self.jhs.1 = spawn(move || con_to_serial(s));
                 sleep(Duration::from_secs_f64(0.5))
             }
-            Message::ReverbGain(_) | Message::ReverbDecay(_) => {
-                println!("[ERROR] Reverb is not yet implemented")
+            Message::ReverbGain(gain) => {
+                // println!("[ERROR] Reverb is not yet implemented")
+                self.synth.lock().unwrap().reverb.set_gain(gain);
+            }
+            Message::ReverbDecay(decay) => {
+                // println!("[ERROR] Reverb is not yet implemented")
+                self.synth.lock().unwrap().reverb.set_decay(decay);
             }
             Message::OvertoneVolume { overtone, vol } => {
                 self.synth.lock().unwrap().overtones[overtone].volume = vol / 100.0;
                 self.synth.lock().unwrap().set_overtones();
             }
             Message::WindowEvent(id) => return change_mode(id, window::Mode::Fullscreen),
+            Message::ChorusPowerTogle => self.synth.lock().unwrap().chorus.power_toggle(),
+            Message::ReverbPowerTogle => self.synth.lock().unwrap().reverb.power_toggle(),
         }
 
         Task::none()
@@ -220,18 +229,26 @@ impl SynthUI {
     fn reverb(&self) -> Column<'_, Message> {
         let decay = vertical_slider(
             0.0..=100.0,
-            0.0, // self.synth.lock().unwrap().reverb.decay * 100.0,
+            self.synth.lock().unwrap().reverb.decay * 100.0,
             Message::ReverbDecay,
         );
 
         let gain = vertical_slider(
             0.0..=100.0,
-            0.0, // self.synth.lock().unwrap().reverb.gain * 100.0,
+            self.synth.lock().unwrap().reverb.gain * 100.0,
             Message::ReverbGain,
         );
 
+        let power = button(if self.synth.lock().unwrap().reverb.power {
+            "On"
+        } else {
+            "Off"
+        })
+        .on_press(Message::ReverbPowerTogle);
+
         column![
             text!["Reverb"].size(24),
+            power,
             row![
                 column![text!["Decay"], decay,]
                     .align_x(Center)
@@ -266,8 +283,16 @@ impl SynthUI {
             Message::ChorusSpeed,
         );
 
+        let power = button(if self.synth.lock().unwrap().chorus.power {
+            "On"
+        } else {
+            "Off"
+        })
+        .on_press(Message::ChorusPowerTogle);
+
         column![
             text!["Chorus"].size(24),
+            power,
             row![
                 column![text!["Vol."], volume]
                     .align_x(Center)
