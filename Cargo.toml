@@ -1,17 +1,28 @@
 [package]
-name = "synth-rt-ui"
+name = "synth-rt"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-leptos = { version = "0.6", features = ["csr"] }
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
-js-sys = "0.3"
-serde = { version = "1", features = ["derive"] }
-serde-wasm-bindgen = "0.6"
-console_error_panic_hook = "0.1.7"
+anyhow = { version = "1.0.91", features = ["backtrace"] }
+# bevy = { version = "0.14.2", default-features = false, features = ["animation", "bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_gilrs", "bevy_gizmos", "bevy_render", "bevy_scene", "bevy_state", "bevy_text", "bevy_ui", "bevy_winit", "default_font", "dynamic_linking", "multi_threaded", "wayland", "x11", "zstd"] }
+# bevy = { version = "0.14.2", default-features = false, features = ["animation", "bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_gilrs", "bevy_gizmos", "bevy_render", "bevy_scene", "bevy_state", "bevy_text", "bevy_ui", "bevy_winit", "default_font", "multi_threaded", "x11", "zstd"] }
+# bevy_framepace = "0.17.1"
+# bevy_ui = "0.14.2"
+glob = "0.3.1"
+iced = { version = "0.13.1", features = ["advanced", "svg"] }
+midi-control = { version = "0.2.2", default-features = false }
+midir = "0.10.0"
+num-traits = "0.2.19"
+reverb = "1.0.47"
+rodio = "0.19.0"
+serialport = { version = "4.6.0", default-features = false }
 
-[workspace]
-members = ["src-tauri"]
+# Enable a small amount of optimization in the dev profile.
+[profile.dev]
+opt-level = 1
+
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3
+

@@ -1,7 +1,15 @@
-# Tauri + Leptos
+# Synth-RT
 
-This template should help get you started developing with Tauri and Leptos.
+A musical synthesizer that is designed to run on a Windows Surface RT (the first gen of the Windows Surface).
 
-## Recommended IDE Setup
+## TODOs
 
-[VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+- [x] add tone shapping via overtone sliders.
+- [x] add reverb.
+- [ ] add option to disable each oscilator individually.
+- [x] add on/off for the reverb and chorus effects
+- [x] put chorus "volume" and "speed" sliders next to eatch other to give them more room. (same with reverb, when implemented)
+- [ ] figure out how to change what overtone each overtone control is making. (by default, theres the fundimental, the octave below the fundemental, the fifth of the fundemental and over tones of the fundemental. i need to figure out a way to change the relationship between eatch overtone and the fundimental)
+- [ ] add a record button to record a raw wav file of just the synth
+- [ ] add importing of custom wave tables from outside software or samples
+- [x] add ability to start the serial connection after launch
